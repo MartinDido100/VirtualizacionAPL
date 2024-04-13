@@ -1,0 +1,1 @@
+awk -F, BEGIN {print "["} {print "{\"DNI\": \""$1"\", \"Mesa\": \""$2"\", \"Aula\": \""$3"\", \"Edificio\": \""$4"\"},"} END {print "]"} -d/*.csv

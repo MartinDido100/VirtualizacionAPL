@@ -1,6 +1,5 @@
 #!/bin/awk
 
-
 #Veo si se mando el parametro de help
 if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
     echo "\n-d, --directorio para pasar la ruta de los archivos .csv (Debe usarse)\n"
@@ -16,8 +15,12 @@ salida="false"
 directorios="false"
 rutaArchivos=""
 
+#Contador de parametros
+contadorPar=0
+
 #Como no se el orden de parametros veo cuales se mandaron
 for par in $@; do
+    echo $contadorPar
     case "$par" in 
         '-p' | '--pantalla')
             pantalla="true"
@@ -27,13 +30,14 @@ for par in $@; do
         ;;
         '-d' | '--directorio')
           directorios="true"
-          rutaArchivos=$par
+          shift
+          rutaArchivos="${!contadorPar}"
         ;;
-        *)
-            echo "Parametros incorrectos, use -h o --help para ayuda"
-            exit 1
     esac
+    contadorPar=$((contadorPar+1))
 done
+
+echo $rutaArchivos
 
 if [ "$directorios" = "false" ]; then
     echo "Falta el parametro -d/--directorio, use -h o --help para ayuda"
@@ -50,8 +54,6 @@ fi
 
 
 #Creo el archivo JSON
-touch ./archivo.json
-
-
+touch ./resumenMesasEstudiantes.json
 
 exit 0
