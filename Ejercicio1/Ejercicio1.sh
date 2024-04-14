@@ -126,16 +126,3 @@ for archivo in "$rutaArchivos"/*; do
 done
 
 exit 0
-
-
-# # Iterar sobre los archivos
-# for archivo in mesa*.csv; do
-#     # Obtener el código de la mesa desde el nombre del archivo
-#     codigo_mesa="${archivo%.csv}"
-
-#     # Leer el archivo y procesar los registros
-#     while IFS=',' read -r dni nota; do
-#         # Almacenar el dni y la nota en el array asociativo
-#         alumnos["$dni"]=$codigo_mesa,$nota
-#     done < "$archivo"
-# done
