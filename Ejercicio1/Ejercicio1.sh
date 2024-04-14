@@ -72,6 +72,12 @@ if [ "$pantalla" = "true" ] && [ "$salida" = "true" ]; then
     exit 1
 fi
 
+#Verifico si la ruta es valida
+if [ ! -d $rutaArchivos ]; then
+    echo "La ruta de los archivos no es valida"
+    exit 1
+fi
+
 # Puede llegar a usarse Grep para buscar por dni en cada archivo leido
 # Con el  pipe > para escribir en archivo JSON
 
@@ -79,6 +85,57 @@ fi
 #Creo el archivo JSON
 touch ./resumenMesasEstudiantes.json
 
-awk -F';' 'NR==1 {print $1}' ../archivos/1234.csv
+declare -A alumnos
+
+echo "{'notas': [" > ./resumenMesasEstudiantes.json
+
+for archivo in "$rutaArchivos"/*; do
+    codigo_mesa=$(basename "$archivo" ".csv")
+    if [ -f "$archivo" ]; then
+        cantNotas=$(awk -F';' '{print NF-1; exit 1}' $archivo)
+
+        while IFS=';' read -r dni notas; do
+            sumaTotal=0
+            #alumnos["$dni"]=$codigo_mesa,$nota
+            pesoNota=$(awk "BEGIN { printf \"%.2f\", 10 / $cantNotas }")
+
+            for ((i=1; i<=cantNotas; i++))
+            do
+                notaAct=$(echo $notas | awk -F';' '{print $'$i'}' | tr -d '\n' | tr -d '\r')
+                case $notaAct in
+                    b)
+                        sumaTotal=$(awk "BEGIN { printf \"%.2f\", $sumaTotal + ($pesoNota*1) }")
+                    ;;
+                    r)
+                        sumaTotal=$(awk "BEGIN { printf \"%.2f\", $sumaTotal + ($pesoNota*0.5) }")
+                    ;;
+                esac
+            done
+
+            notaFinal=$(printf "%.0f" $sumaTotal) #Redondeo el numero a entero mas cercano
+
+            alumnos["$dni"]+=$codigo_mesa,$notaFinal,
+
+        done < <(awk -F';' 'NR > 1 {print $0}' $archivo) # Leo a partir de la segunda linea del archivo, y con el <(..) hago que se trate como un archivo y no como un string
+
+        for alumno in "${!alumnos[@]}"; do
+            echo "DNI: $alumno, Valor: ${alumnos[$alumno]}"
+        done
+
+    fi
+done
 
 exit 0
+
+
+# # Iterar sobre los archivos
+# for archivo in mesa*.csv; do
+#     # Obtener el código de la mesa desde el nombre del archivo
+#     codigo_mesa="${archivo%.csv}"
+
+#     # Leer el archivo y procesar los registros
+#     while IFS=',' read -r dni nota; do
+#         # Almacenar el dni y la nota en el array asociativo
+#         alumnos["$dni"]=$codigo_mesa,$nota
+#     done < "$archivo"
+# done
