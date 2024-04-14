@@ -126,6 +126,5 @@ for archivo in "$rutaArchivos"/*; do
 done
 
 
-#dssgakdgas
 
 exit 0
