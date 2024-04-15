@@ -121,13 +121,13 @@ for archivo in "$rutaArchivos"/*; do
         for alumno in "${!alumnos[@]}"; do
             echo "DNI: $alumno, Valor: ${alumnos[$alumno]}"
         done
-
+asas
     fi
 done
 
 exit 0
 
-
+asas
 # # Iterar sobre los archivos
 # for archivo in mesa*.csv; do
 #     # Obtener el código de la mesa desde el nombre del archivo
