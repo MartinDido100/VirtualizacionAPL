@@ -2,6 +2,76 @@
 
 #Veo si se mando el parametro de help
 
+crearArchivo(){
+    #Creo el archivo JSON
+    touch ./resumenMesasEstudiantes.json
+    echo -e "{\n\"notas\": [" > ./resumenMesasEstudiantes.json
+
+    alumnoActual=0
+    totalAlumnos=${#alumnos[@]}
+    for dni in "${!alumnos[@]}"; do
+     #Con $alumno obtengo la clave del array asociativo
+     #Con ${alumnos[$alumno]} obtengo el valor del array asociativo
+     cantCampos=$(echo ${alumnos[$dni]} | awk -F',' '{print NF-1}')
+     echo -e "\t{" >> ./resumenMesasEstudiantes.json
+     echo -e "\t\t\"dni\": \"$dni\"," >> ./resumenMesasEstudiantes.json
+     echo -e "\t\t\"notas\": [" >> ./resumenMesasEstudiantes.json
+     for ((i=1; i<=cantCampos; i+=2)){
+        #El -n no pone enter al final del echo, -e acepta los \t y \n
+        echo -n -e "\t\t\t{ \"materia\": \"$(echo ${alumnos[$dni]} | awk -F',' '{print $'$i'}')\", " >> ./resumenMesasEstudiantes.json
+        echo -n "\"nota\": \"$(echo ${alumnos[$dni]} | awk -F',' '{print $'$((i+1))'}')\"}" >> ./resumenMesasEstudiantes.json
+
+        if [ "$i" -lt "$((cantCampos-1))" ]; then
+            echo -e "," >> ./resumenMesasEstudiantes.json
+        fi
+
+     }
+        echo -e -n "\n\t\t]\n\t}" >> ./resumenMesasEstudiantes.json
+
+        if [ "$alumnoActual" -lt "$((totalAlumnos-1))" ]; then
+            echo -e "," >> ./resumenMesasEstudiantes.json
+        fi
+
+        ((alumnoActual++))
+    done
+
+    echo -e "\n] }" >> ./resumenMesasEstudiantes.json
+}
+
+mostrarPorPantalla(){
+    echo -e "{\n\"notas\": ["
+
+    alumnoActual=0
+    totalAlumnos=${#alumnos[@]}
+    for dni in "${!alumnos[@]}"; do
+     #Con $alumno obtengo la clave del array asociativo
+     #Con ${alumnos[$alumno]} obtengo el valor del array asociativo
+     cantCampos=$(echo ${alumnos[$dni]} | awk -F',' '{print NF-1}')
+     echo -e "\t{"
+     echo -e "\t\t\"dni\": \"$dni\","
+     echo -e "\t\t\"notas\": ["
+     for ((i=1; i<=cantCampos; i+=2)){
+        #El -n no pone enter al final del echo, -e acepta los \t y \n
+        echo -n -e "\t\t\t{ \"materia\": \"$(echo ${alumnos[$dni]} | awk -F',' '{print $'$i'}')\", "
+        echo -n "\"nota\": \"$(echo ${alumnos[$dni]} | awk -F',' '{print $'$((i+1))'}')\"}"
+
+        if [ "$i" -lt "$((cantCampos-1))" ]; then
+            echo -e ","
+        fi
+
+     }
+        echo -e -n "\n\t\t]\n\t}"
+
+        if [ "$alumnoActual" -lt "$((totalAlumnos-1))" ]; then
+            echo -e ","
+        fi
+
+        ((alumnoActual++))
+    done
+
+    echo -e "\n] }"
+}
+
 ayuda() {
     echo "\n-d, --directorio para pasar la ruta de los archivos .csv (Debe usarse)\n"
     echo "-p, --pantalla para mostrar el arhivo JSON generado por pantalla\n"
@@ -62,6 +132,11 @@ do
     esac
 done
 
+if [ "$pantalla" = "false" ] && [ "$salida" = "false" ]; then
+    echo "Faltan parametros, use -h o --help para ayuda"
+    exit 1
+fi
+
 if [ "$directorios" = "false" ]; then
     echo "Falta el parametro -d/--directorio, use -h o --help para ayuda"
     exit 1
@@ -82,12 +157,9 @@ fi
 # Con el  pipe > para escribir en archivo JSON
 
 
-#Creo el archivo JSON
-touch ./resumenMesasEstudiantes.json
+
 
 declare -A alumnos
-
-echo "{'notas': [" > ./resumenMesasEstudiantes.json
 
 for archivo in "$rutaArchivos"/*; do
     codigo_mesa=$(basename "$archivo" ".csv")
@@ -96,7 +168,6 @@ for archivo in "$rutaArchivos"/*; do
 
         while IFS=';' read -r dni notas; do
             sumaTotal=0
-            #alumnos["$dni"]=$codigo_mesa,$nota
             pesoNota=$(awk "BEGIN { printf \"%.2f\", 10 / $cantNotas }")
 
             for ((i=1; i<=cantNotas; i++))
@@ -118,11 +189,14 @@ for archivo in "$rutaArchivos"/*; do
 
         done < <(awk -F';' 'NR > 1 {print $0}' $archivo) # Leo a partir de la segunda linea del archivo, y con el <(..) hago que se trate como un archivo y no como un string
 
-        for alumno in "${!alumnos[@]}"; do
-            echo "DNI: $alumno, Valor: ${alumnos[$alumno]}"
-        done
-
     fi
 done
+
+if [ "$salida" = "true" ]; then
+    crearArchivo
+    echo "Archivo JSON creado en la ruta: $(pwd)/resumenMesasEstudiantes.json"
+else
+    mostrarPorPantalla
+fi
 
 exit 0
