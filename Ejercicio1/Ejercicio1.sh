@@ -2,7 +2,7 @@
 
 #Veo si se mando el parametro de help
 
-crearArchivo(){
+carearArchivo(){
     #Creo el archivo JSON
     touch ./resumenMesasEstudiantes.json
     echo -e "{\n\"notas\": [" > ./resumenMesasEstudiantes.json
@@ -189,6 +189,9 @@ for archivo in "$rutaArchivos"/*; do
 
         done < <(awk -F';' 'NR > 1 {print $0}' $archivo) # Leo a partir de la segunda linea del archivo, y con el <(..) hago que se trate como un archivo y no como un string
 
+        for alumno in "${!alumnos[@]}"; do
+            echo "DNI: $alumno, Valor: ${alumnos[$alumno]}"
+        done
     fi
 done
 
@@ -198,5 +201,3 @@ if [ "$salida" = "true" ]; then
 else
     mostrarPorPantalla
 fi
-
-exit 0
