@@ -4,7 +4,7 @@
 ayuda() {
     echo "\n-m1, --matriz1, ruta del archivo con la matriz1, debe ser valido\n"
     echo "-m2, --matriz2, ruta del archivo con la matriz2, debe ser valido\n"
-    echo "-s, Caracter separador de valores, por defecto es ';'\n"
+    echo "-s, Caracter separador de valores, por defecto es ';', no puede ser '-'\n"
     echo "-h, --help ayuda\n"
 }
 
@@ -56,25 +56,150 @@ if [ $s = "false" ]; then
  s=";"
 fi
 
+if [ $s = '-' ]; then
+    echo "El separador no puede ser "-""
+    exit 1
+fi
 
 if [ ! -f $rm1 ] || [ ! -f $rm2 ]; then
     echo "Los archivos no existen"
     exit 1
 fi
 
-declare -a matriz1
+#Valido que las matrices sean validas con awk
 
-cantFilasM1=$(awk -F';' '{print NF; exit 1}' $rm1)
+validacion1=$(awk -v RS="\r" -F"$s" '
+
+    BEGIN {
+        esValida=1
+        cantCamposAnt=0
+    }
+    
+    {
+        print $0
+        if (NF == 0) {
+            esValida=0
+        }
+
+        if (cantCamposAnt != 0 && cantCamposAnt != NF) {
+            esValida=0
+        }
+
+        for (i=1; i<=NF; i++) {
+            if ($i !~ /^[[:space:]]*[-]?[0-9]+[[:space:]]*$/) {
+                esValida=0
+            }
+        }
+    }
+    
+    END {
+        print esValida
+    }
+' "$rm1")
+
+# validacion2=$(awk -v RS="\r" -F"$s" '
+
+#     BEGIN {
+#         esValida=1
+#         cantCamposAnt=0
+#     }
+    
+#     {
+#         if (NF == 0) {
+#             esValida=0
+#         }
+
+#         if (cantCamposAnt != 0 && cantCamposAnt != NF) {
+#             esValida=0
+#         }
+
+#         for (i=1; i<=NF; i++) {
+#             if ($i !~ /^[[:space:]]*[-]?[0-9]+[[:space:]]*$/) {
+#                 print $i
+#                 esValida=0
+#             }
+#         }
+
+#     }
+    
+#     END {
+#         if (esValida == 0) {
+#             print 1
+#         }else{
+#             print 0
+#         }
+#     }
+# ' "$rm2")
+
+echo $validacion1
+
+declare -a matriz1
 
 while IFS="$s" read -r line
 do
     matriz1+=("${line[@]}")
 done < $rm1
 
-for fila in "${matriz1[@]}"; do
-    cantCol=$(echo "$fila" | awk -F ';' '{print NF}')
-    for ((i=1; i<=$cantCol; i++)); do
-            campo=$(echo "$fila" | awk -F';' '{print $'$i'}')
-            echo "$i campo de la fila: $campo"
+declare -a matriz2
+
+while IFS="$s" read -r line
+do
+    matriz2+=("${line[@]}")
+done < $rm2
+
+#Despues de leer las 2 matrices chequeo que las pueda multiplicar
+
+cantFilasM1=$(awk -F';' '{print NF; exit 1}' $rm1)
+cantFilasM2=$(awk -F';' '{print NF; exit 1}' $rm2)
+cantColM1=$(echo "${matriz1[0]}" | awk -F';' '{print NF}')
+cantColM2=$(echo "${matriz2[0]}" | awk -F';' '{print NF}')
+
+if [ $cantColM1 != $cantFilasM1 ]; then
+    echo "No se pueden multiplicar las matrices"
+    exit 1
+fi
+
+declare -a matrizResultado
+
+for ((i=1; i<=$cantFilasM1; i++)); do
+    for ((j=1; j<=$cantColM2; j++)); do
+        suma=0
+        for ((k=1; k<=$cantColM1; k++)); do
+            campom1=$(echo "${matriz1[$((i - 1))]}" | awk -F';' '{print $'$k'}' | tr -d '\r')
+            campom2=$(echo "${matriz2[$((k - 1))]}" | awk -F';' '{print $'$j'}' | tr -d '\r')
+
+            suma=$(($suma + $campom1*$campom2))
+        done
+        matrizResultado[$i]+="$suma|"
     done
 done
+
+for fila in "${matrizResultado[@]}"; do
+    echo $fila
+    echo "---------"
+done
+
+echo "Orden de la matriz resultado: $cantFilasM1 x $cantColM2"
+
+#Mostrar si es cuadrada
+if [ $cantFilasM1 = $cantColM2 ]; then
+    echo "La matriz resultado es cuadrada"
+else
+    echo "La matriz resultado no es cuadrada"
+fi
+
+#Mostrar si es matriz fila
+if [ $cantFilasM1 = 1 ]; then
+    echo "La matriz resultado es una matriz fila"
+else
+    echo "La matriz resultado no es una matriz fila"
+fi
+
+#Mostrar si es matriz columna
+if [ $cantColM2 = 1 ]; then
+    echo "La matriz resultado es una matriz columna"
+else
+    echo "La matriz resultado no es una matriz columna"
+fi
+
+exit 0
