@@ -2,7 +2,7 @@
 
 #Veo si se mando el parametro de help
 
-crearArchivo(){
+carearArchivo(){
     #Creo el archivo JSON
     touch ./resumenMesasEstudiantes.json
     echo -e "{\n\"notas\": [" > ./resumenMesasEstudiantes.json
