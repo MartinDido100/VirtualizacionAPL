@@ -189,13 +189,9 @@ for archivo in "$rutaArchivos"/*; do
 
         done < <(awk -F';' 'NR > 1 {print $0}' $archivo) # Leo a partir de la segunda linea del archivo, y con el <(..) hago que se trate como un archivo y no como un string
 
-<<<<<<< HEAD
         for alumno in "${!alumnos[@]}"; do
             echo "DNI: $alumno, Valor: ${alumnos[$alumno]}"
         done
-asas
-=======
->>>>>>> a726982979ed1169655996494f75919dd18b07c0
     fi
 done
 
@@ -205,20 +201,3 @@ if [ "$salida" = "true" ]; then
 else
     mostrarPorPantalla
 fi
-
-<<<<<<< HEAD
-asas
-# # Iterar sobre los archivos
-# for archivo in mesa*.csv; do
-#     # Obtener el código de la mesa desde el nombre del archivo
-#     codigo_mesa="${archivo%.csv}"
-
-#     # Leer el archivo y procesar los registros
-#     while IFS=',' read -r dni nota; do
-#         # Almacenar el dni y la nota en el array asociativo
-#         alumnos["$dni"]=$codigo_mesa,$nota
-#     done < "$archivo"
-# done
-=======
-exit 0
->>>>>>> a726982979ed1169655996494f75919dd18b07c0

@@ -64,5 +64,17 @@ fi
 
 declare -a matriz1
 
-awk -F,"$s" '{print $0}' $rm1
+cantFilasM1=$(awk -F';' '{print NF; exit 1}' $rm1)
 
+while IFS="$s" read -r line
+do
+    matriz1+=("${line[@]}")
+done < $rm1
+
+for fila in "${matriz1[@]}"; do
+    cantCol=$(echo "$fila" | awk -F ';' '{print NF}')
+    for ((i=1; i<=$cantCol; i++)); do
+            campo=$(echo "$fila" | awk -F';' '{print $'$i'}')
+            echo "$i campo de la fila: $campo"
+    done
+done
