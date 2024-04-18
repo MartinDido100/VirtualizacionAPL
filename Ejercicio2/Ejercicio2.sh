@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 ayuda() {
     echo -e "\n-m1, --matriz1, ruta del archivo con la matriz1, debe ser valido\n"
     echo -e "-m2, --matriz2, ruta del archivo con la matriz2, debe ser valido\n"
