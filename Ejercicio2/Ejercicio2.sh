@@ -1,10 +1,9 @@
 #!/bin/bash
 
-
 ayuda() {
     echo "\n-m1, --matriz1, ruta del archivo con la matriz1, debe ser valido\n"
     echo "-m2, --matriz2, ruta del archivo con la matriz2, debe ser valido\n"
-    echo "-s, Caracter separador de valores, por defecto es ';'\n"
+    echo "-s, Caracter separador de valores, por defecto es ';', no puede ser '-'\n"
     echo "-h, --help ayuda\n"
 }
 
@@ -56,6 +55,10 @@ if [ $s = "false" ]; then
  s=";"
 fi
 
+if [ $s = '-' ]; then
+    echo "El separador no puede ser "-""
+    exit 1
+fi
 
 if [ ! -f $rm1 ] || [ ! -f $rm2 ]; then
     echo "Los archivos no existen"
@@ -71,6 +74,8 @@ do
     matriz1+=("${line[@]}")
 done < $rm1
 
+echo -e "Matriz 1\n"
+
 for fila in "${matriz1[@]}"; do
     cantCol=$(echo "$fila" | awk -F ';' '{print NF}')
     for ((i=1; i<=$cantCol; i++)); do
@@ -78,3 +83,27 @@ for fila in "${matriz1[@]}"; do
             echo "$i campo de la fila: $campo"
     done
 done
+
+declare -a matriz2
+
+cantFilasM1=$(awk -F';' '{print NF; exit 1}' $rm2)
+
+while IFS="$s" read -r line
+do
+    matriz2+=("${line[@]}")
+done < $rm2
+
+echo -e "Matriz 2\n"
+
+for fila in "${matriz2[@]}"; do
+    cantCol=$(echo "$fila" | awk -F ';' '{print NF}')
+    for ((i=1; i<=$cantCol; i++)); do
+            campo=$(echo "$fila" | awk -F';' '{print $'$i'}')
+            if [[ !"$campo" =~ ^[0-9]+$ ]]; then
+            echo "Error: El campo $i de la fila contiene un valor no numérico: $campo"
+        else
+            echo "$i campo de la fila: $campo"
+        fi
+    done
+done
+
