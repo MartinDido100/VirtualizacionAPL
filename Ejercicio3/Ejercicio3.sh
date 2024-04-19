@@ -72,33 +72,36 @@ if [ ! -d $rutaArchivos ]; then
     exit 1
 fi
 
-#Cantidad de arvhivos del directorio que tengan la extension
-cantArchivos=$(ls "$directorio"/*."$extension" | wc -l)
+cantArchivos=$(ls $directorio/*.$extension | wc -l)
 
-# declare -A ocurrencias
-# declare -A palabras
-# declare -A caracteres
-# declare -A palabrasMayores
+letrasOmitir=$(awk -v omitir="$omitir" 'BEGIN{gsub(/[\[\],]/,"",omitir); print omitir}')
 
-cantTotal=0
+if [ $letrasOmitir = " " ]; then
+    echo "No se ingresaron letras a omitir"
+    exit 1
+fi
 
-#Inicializo palabrasMayores
-
-for archivo in "$directorio"/*.txt; do
-
-    awk_script = `awk -v cArch="$cantArchivos" -F"$separador" '
+cat $directorio/*.$extension | awk -v cArch="$cantArchivos" -v letrasOmitir="$letrasOmitir" -F"$separador" '
 
     BEGIN{
         mayorAct=0
         cantTotal=0
+        palabrasMayores[""]=0
     }
 
     {
         for(i=1; i<=NF; i++){
-            if( length( $i ) > 0 ){
+            omitir=0
+            for(letraOmitir=1; letraOmitir<=length(letrasOmitir); letraOmitir++){
+                if( index( $i, substr( letrasOmitir, letraOmitir, 1 ) ) > 0){
+                    omitir=1
+                }
+            }
+
+            if( length( $i ) > 0 && omitir == 0){
                 cantTotal++
                 ocurrencias[ $i ]++
-                palabras[ length( $i ) ]++
+                palabrasPorCantCaracter[ length( $i ) ]++
                 
                 for(nCaracter = 1; nCaracter <= length( $i ); nCaracter++){
                     caracteres[ substr( $i, nCaracter, 1 ) ]++
@@ -124,27 +127,22 @@ for archivo in "$directorio"/*.txt; do
             }
         }
 
-        for(palabra in palabrasMayores){
-            print palabra, palabrasMayores[palabra]
+        for(cantCar in palabrasPorCantCaracter){
+            print "Palabras de "cantCar" caracteres: "palabrasPorCantCaracter[cantCar]
         }
 
-        for(caract in caracteres){
-            print cara, caracteres[caract]
+        for(palabraMayor in palabrasMayores){
+            print "Palabra/s mas repetida/s: "palabraMayor" con "ocurrencias[palabraMayor]" ocurrencias"
         }
 
-        for(palabra in palabras){
-            print palabra, palabras[palabra]
-        }
+        print "Cantidad total de palabras: "cantTotal
 
-        print cantTotal
+        print "Promedio de palabras por archivo: "cantTotal/cArch
+
+        for(caracter in caracteres){
+            print "Caracter ["caracter"] aparece "caracteres[caracter]" veces"
+        }
 
     }
 
-' "$archivo"`
-
-read cantTotal palabrasMayores caracteres palabras <<< "$(awk "${awk_script}")"
-
-# echo $cantTotal
-
-done
-
+'
