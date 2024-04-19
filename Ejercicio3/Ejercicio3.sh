@@ -146,3 +146,5 @@ cat $directorio/*.$extension | awk -v cArch="$cantArchivos" -v letrasOmitir="$le
     }
 
 '
+
+exit 0

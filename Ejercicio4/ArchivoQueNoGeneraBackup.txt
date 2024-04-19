@@ -1,0 +1,3 @@
+Archivo 0:
+
+Los cambios en este archivo no generan BackUps
