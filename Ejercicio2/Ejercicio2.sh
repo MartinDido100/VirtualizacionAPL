@@ -153,12 +153,12 @@ done < $rm2
 
 #Despues de leer las 2 matrices chequeo que las pueda multiplicar
 
-cantFilasM1=$(awk -F';' '{print NF; exit 1}' $rm1)
-cantFilasM2=$(awk -F';' '{print NF; exit 1}' $rm2)
+cantFilasM1=$(awk -F';' 'END{print NR}' $rm1)
+cantFilasM2=$(awk -F';' 'END{print NR}' $rm2)
 cantColM1=$(echo "${matriz1[0]}" | awk -F';' '{print NF}')
 cantColM2=$(echo "${matriz2[0]}" | awk -F';' '{print NF}')
 
-if [ $cantColM1 != $cantFilasM1 ]; then
+if [ $cantColM1 != $cantFilasM2 ]; then
     echo "No se pueden multiplicar las matrices"
     exit 1
 fi
