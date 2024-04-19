@@ -153,8 +153,8 @@ done < $rm2
 
 #Despues de leer las 2 matrices chequeo que las pueda multiplicar
 
-cantFilasM1=$(awk -F';' 'END{print NR}' $rm1)
-cantFilasM2=$(awk -F';' 'END{print NR}' $rm2)
+cantFilasM1=$(awk -F"$s" 'END{print NR}' $rm1)
+cantFilasM2=$(awk -F"$s" 'END{print NR}' $rm2)
 cantColM1=$(echo "${matriz1[0]}" | awk -F';' '{print NF}')
 cantColM2=$(echo "${matriz2[0]}" | awk -F';' '{print NF}')
 
@@ -177,3 +177,27 @@ for ((i=1; i<=$cantFilasM1; i++)); do
         matrizResultado[$i]+="$suma|"
     done
 done
+
+for fila in "${matrizResultado[@]}"; do
+    echo $fila
+    echo "---------"
+done
+echo "Orden de la matriz resultado: $cantFilasM1 x $cantColM2"
+#Mostrar si es cuadrada
+if [ $cantFilasM1 = $cantColM2 ]; then
+    echo "La matriz resultado es cuadrada"
+else
+    echo "La matriz resultado no es cuadrada"
+fi
+#Mostrar si es matriz fila
+if [ $cantFilasM1 = 1 ]; then
+    echo "La matriz resultado es una matriz fila"
+else
+    echo "La matriz resultado no es una matriz fila"
+fi
+#Mostrar si es matriz columna
+if [ $cantColM2 = 1 ]; then
+    echo "La matriz resultado es una matriz columna"
+else
+    echo "La matriz resultado no es una matriz columna"
+fi
