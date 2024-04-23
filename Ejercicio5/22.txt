@@ -1,8 +1,0 @@
-Informacion del personaje:
-Id: 22
-Name: Aqua Rick
-Status: unknown
-Species: Humanoid
-Gender: Male
-Origin: unknown
-Location: Citadel of Ricks

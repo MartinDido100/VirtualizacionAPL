@@ -1,8 +1,0 @@
-Informacion del personaje:
-Id: 23
-Name: Arcade Alien
-Status: unknown
-Species: Alien
-Gender: Male
-Origin: unknown
-Location: Immortality Field Resort
