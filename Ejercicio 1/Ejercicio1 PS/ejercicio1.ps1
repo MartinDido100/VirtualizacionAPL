@@ -36,15 +36,27 @@ param(
     [string]$directorio,
 
     [Parameter(Mandatory=$false)]
-    [ValidateScript({-not ($pantalla -and $_)})]
-    [string]$salida,
+    [switch]$pantalla,
 
     [Parameter(Mandatory=$false)]
-    [switch]$pantalla
+    [ValidateScript({
+        if(Test-Path $_ -PathType 'Container'){
+            return $true
+        }else {
+            throw "El directorio de salida no existe."
+            return $false
+        }
+    })]
+    [string]$salida
 )
 
 if (-not $directorio) {
     Write-Error "El parámetro -directorio es obligatorio."
+    exit
+}
+
+if(-not $salida -and -not $pantalla) {
+    Write-Error "Debe especificar un archivo de salida o usar el parámetro -pantalla."
     exit
 }
 
@@ -73,6 +85,7 @@ function Get-csvAArray() {
 
         # Calcular la nota final
         $sumaTotal = 0
+        $pesoNotas = 10 / ($notasAlumno.Length)
         foreach ($nota in $notasAlumno) {
             $multiplicador = switch ($nota) {
                 'b' { 1 }
@@ -80,10 +93,10 @@ function Get-csvAArray() {
                 'm' { 0 }
                 default { 0 }
             }
-            $sumaTotal += (10 / ($notasAlumno.Length)) * $multiplicador
+            $sumaTotal += $pesoNotas * $multiplicador
         }
 
-        $sumaTruncada = [math]::Floor($sumaTotal)
+        $sumaTruncada = [System.Math]::Round($sumaTotal)
 
         if ($notas[$dni]) {
             $notas[$dni] += "|"
@@ -122,6 +135,7 @@ function Get-manejarArchivos() {
                 notas = $notasArray
             }
         }
+        #
         $json = $jsonObj | ConvertTo-Json -Depth 3
         Write-Output $json
     }
@@ -130,14 +144,14 @@ function Get-manejarArchivos() {
 try {
     # Se define una variable para guardar las notas de los distintos alumnos
     $notas = @{}
-
     # Se obtiene todos los archivos CSV en el directorio
     $archivosCsv = Get-ChildItem -Path $directorio -Filter "*.csv"
     if ($pantalla) {
         $archivosCsv | Get-manejarArchivos
         exit
     } else {
-        $archivosCsv | Get-manejarArchivos > "$salida"
+        Write-Output "Guardando resultados en $salida/resultado.json..."
+        $archivosCsv | Get-manejarArchivos > "$salida/resultado.json"
     }
 } catch {
     Write-Error "Se ha producido un error: $_"
