@@ -30,6 +30,8 @@ detener_monitoreo() {
     exit 0
 }
 
+command -v inotifywait > /dev/null || { echo "No se encuentra el comando inotifywait. Por favor, instalelo."; exit 1; }
+
 options=$(getopt -o hkp:d:s: --l kill,patron,help,directorio:,salida: -- "$@" 2> /dev/null)    
 
 if [ "$?" != "0" ]
