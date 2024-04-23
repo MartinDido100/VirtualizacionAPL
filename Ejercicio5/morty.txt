@@ -1,0 +1,8 @@
+Informacion del personaje:
+Id: 2
+Name: Morty Smith
+Status: Alive
+Species: Human
+Gender: Male
+Origin: unknown
+Location: Citadel of Ricks
