@@ -1,9 +1,64 @@
+<#
+.SYNOPSIS
+Este script toma archivos CSV de notas de alumnos y genera un archivo JSON con las notas finales de cada alumno.
+
+.DESCRIPTION
+Se procesan las notas conceptuales y se les asigna un valor numérico antes de guardar las notas en variables JSON.
+Puede imprimir los resultados por pantalla o crear un archivo JSON con los resultados.
+
+.PARAMETER directorio
+Ruta del directorio que contiene los archivos CSV a procesar.
+
+.PARAMETER salida
+Ruta del archivo JSON de salida.
+
+.PARAMETER pantalla
+Muestra la salida por pantalla, no genera el archivo JSON. Este parámetro no se puede usar a la vez que -salida.
+
+
+.EXAMPLE
+Get-Help .\Ejercicio1.ps1 -Full
+Muestra la ayuda completa del script.
+
+.EXAMPLE
+.\Ejercicio1.ps1 -directorio "ruta\del\directorio" -pantalla
+Procesa los archivos CSV en la ruta especificada y los muestra por pantalla.
+
+.EXAMPLE
+.\Ejercicio1.ps1 -directorio "ruta\del\directorio" -salida "resultados.json"
+Procesa los archivos CSV en la ruta especificada y guarda los resultados en un archivo JSON cuyo nombre se recibe por parámetro.
+#>
+
+
+param(
+    [Parameter(Mandatory=$true)]
+    [ValidateScript({Test-Path $_ -PathType 'Container'})]
+    [string]$directorio,
+
+    [Parameter(Mandatory=$false)]
+    [ValidateScript({-not ($pantalla -and $_)})]
+    [string]$salida,
+
+    [Parameter(Mandatory=$false)]
+    [switch]$pantalla
+)
+
+if (-not $directorio) {
+    Write-Error "El parámetro -directorio es obligatorio."
+    exit
+}
+
+# Verificar que los parámetros -salida y -pantalla no se usen al mismo tiempo
+if ($salida -and $pantalla) {
+    Write-Error "No se pueden usar los parámetros -salida y -pantalla al mismo tiempo."
+    exit
+}
+
 # Definir el directorio donde están los archivos CSV
-$directorioCsv = ".\"
 $notas = @{}
 
 # Obtener todos los archivos CSV en el directorio
-$archivosCsv = Get-ChildItem -Path $directorioCsv -Filter "*.csv"
+$archivosCsv = Get-ChildItem -Path $directorio -Filter "*.csv"
 
 
 function Get-csvAArray() {
@@ -79,4 +134,15 @@ function Get-manejarArchivos() {
     }
 }
 
-$archivosCsv | Get-manejarArchivos > ./alumnos.json
+
+try {
+    if ($pantalla) {
+        $archivosCsv | Get-manejarArchivos
+        exit
+    } else {
+        $archivosCsv | Get-manejarArchivos > "$salida"
+    }
+} catch {
+    Write-Error "Se ha producido un error: $_"
+    exit
+}
