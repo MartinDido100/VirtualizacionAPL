@@ -54,13 +54,6 @@ if ($salida -and $pantalla) {
     exit
 }
 
-# Definir el directorio donde están los archivos CSV
-$notas = @{}
-
-# Obtener todos los archivos CSV en el directorio
-$archivosCsv = Get-ChildItem -Path $directorio -Filter "*.csv"
-
-
 function Get-csvAArray() {
     [CmdletBinding()]
     param(
@@ -134,8 +127,12 @@ function Get-manejarArchivos() {
     }
 }
 
-
 try {
+    # Se define una variable para guardar las notas de los distintos alumnos
+    $notas = @{}
+
+    # Se obtiene todos los archivos CSV en el directorio
+    $archivosCsv = Get-ChildItem -Path $directorio -Filter "*.csv"
     if ($pantalla) {
         $archivosCsv | Get-manejarArchivos
         exit
