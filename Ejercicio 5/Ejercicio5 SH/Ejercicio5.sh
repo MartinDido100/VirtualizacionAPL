@@ -140,6 +140,8 @@ echo "      -n \"rick, morty\""
 echo -e "\n-------------------------------------------------------------------------------------------------------------------\n"
 }
 
+command -v jq > /dev/null || { echo "Error: jq no se encuentra instalado. Por favor, instale jq antes de continuar."; exit 1; }
+
 options=$(getopt -o i:n:h --l help,id:,nombre: -- "$@" 2> /dev/null)
 if [ "$?" != "0" ] 
 then
@@ -225,7 +227,7 @@ for clave in $claves; do
             URL="https://rickandmortyapi.com/api/character/$clave"
         else
             URL="https://rickandmortyapi.com/api/character/?name=$clave"
-        fi    
+        fi
 
         Json=$(curl -s "$URL")
 

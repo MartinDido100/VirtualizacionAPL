@@ -96,7 +96,7 @@ function Get-csvAArray() {
             $sumaTotal += $pesoNotas * $multiplicador
         }
 
-        $sumaTruncada = [System.Math]::Round($sumaTotal)
+        $sumaTruncada = [System.Math]::Floor($sumaTotal)
 
         if ($notas[$dni]) {
             $notas[$dni] += "|"
