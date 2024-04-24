@@ -1,32 +1,34 @@
 <#
 .SYNOPSIS
-Este script toma archivos CSV de notas de alumnos y genera un archivo JSON con las notas finales de cada alumno.
+Este script toma dos archivos CSV y ejecuta una multiplicación de matrices.
 
 .DESCRIPTION
-Se procesan las notas conceptuales y se les asigna un valor numérico antes de guardar las notas en variables JSON.
-Puede imprimir los resultados por pantalla o crear un archivo JSON con los resultados.
+Cada archivo debe contener una matriz, donde cada fila es una línea y los elementos están separados por un delimitador.
+El script importa las matrices de los archivos CSV y las multiplica.
+El resultado se muestra por pantalla y se indica si la matriz resultante es cuadrada, fila o columna.
 
-.PARAMETER directorio
-Ruta del directorio que contiene los archivos CSV a procesar.
+.PARAMETER matriz1
+Ruta del archivo CSV que contiene la primera matriz.
 
-.PARAMETER salida
-Ruta del archivo JSON de salida.
+.PARAMETER matriz2
+Ruta del archivo CSV que contiene la segunda matriz.
 
-.PARAMETER pantalla
-Muestra la salida por pantalla, no genera el archivo JSON. Este parámetro no se puede usar a la vez que -salida.
-
+.PARAMETER separador
+Carácter que se utiliza para separar los elementos de las matrices. Por defecto es la coma. No puede utilizarse un número como separador, ni un signo "-"
 
 .EXAMPLE
 Get-Help .\Ejercicio1.ps1 -Full
 Muestra la ayuda completa del script.
 
 .EXAMPLE
-.\Ejercicio1.ps1 -directorio "ruta\del\directorio" -pantalla
-Procesa los archivos CSV en la ruta especificada y los muestra por pantalla.
+.\Ejercicio2.ps1 -matriz1 "ruta\de\la\matriz1.csv" -matriz2 "ruta\de\la\matriz2.csv"
 
 .EXAMPLE
-.\Ejercicio1.ps1 -directorio "ruta\del\directorio" -salida "resultados.json"
-Procesa los archivos CSV en la ruta especificada y guarda los resultados en un archivo JSON cuyo nombre se recibe por parámetro.
+.\Ejercicio2.ps1 -matriz1 "ruta\de\la\matriz1.csv" -matriz2 "ruta\de\la\matriz2.csv" -separador ";"
+
+.NOTES
+Ambas matrices deben ser compatibles para la multiplicación.
+La matriz resultante tendrá el mismo número de filas que la primera matriz y el mismo número de columnas que la segunda matriz.
 #>
 
 param(
@@ -34,58 +36,93 @@ param(
     [string]$matriz1,
     [Parameter(Mandatory=$true)]
     [string]$matriz2,
+    [ValidatePattern("^[^0-9\-]+$")]
     [string]$separador = ','
 )
 
+try {
+    if (-not (Test-Path $matriz1)) {
+        throw "El archivo $matriz1 no existe."
+    }
+    if (-not (Test-Path $matriz2)) {
+        throw "El archivo $matriz2 no existe."
+    }
+} catch {
+    Write-Host "Error: $_"
+    exit
+}
+
 function Import-CsvMatrix {
     param(
-        [string]$path,
+        [Parameter(Mandatory=$true, ValueFromPipeline=$true)]
+        [string]$line,
         [string]$delimiter
     )
-    $matrix = Get-Content $path | ForEach-Object {
-        # Divide cada línea por el delimitador para crear un array de enteros
-        $row = $_ -split $delimiter | ForEach-Object { [int]$_ }
-        # Retorna el array de enteros (fila de la matriz)
-        ,@($row)
+    Begin {
+        $matrix = @()
+        $columnas = 0
     }
-    return $matrix
+    Process {
+        $row = $line -split $delimiter
+        if ($columnas -eq 0) {
+            $columnas = $row.Length
+        }
+        if ($columnas -ne $row.Length) {
+            throw "Todas las filas de la matriz deben tener la misma cantidad de elementos."
+        }
+        $row = $row | ForEach-Object {
+            if (-not ($_ -match "^(-)?[0-9]+([\.,])?([0-9]+)?$")) {
+                throw "El archivo contiene caracteres no permitidos, los valores deben ser numéricos. $_"
+            }
+            [float]$_ 
+        }
+
+        # Agrega la fila procesada a la matriz
+        $matrix += ,@($row)
+    }
+    End {
+        $matrix
+    }
 }
 
 function Multiply-Matrices {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true, ValueFromPipelineByPropertyName=$true)]
-        [int[][]]$matrix1,
+        [float[][]]$matrix1,
         [Parameter(Mandatory=$true, ValueFromPipelineByPropertyName=$true)]
-        [int[][]]$matrix2
+        [float[][]]$matrix2
     )
-    Begin {
-        # Inicializar la matriz de resultados
-        $result = New-Object 'int[][]' ($matrix1.Length)
-        for ($i = 0; $i -lt $matrix1.Length; $i++) {
-            $result[$i] = New-Object 'int[]' ($matrix2[0].Length)
-        }
+
+    # Inicializar la matriz de resultados
+    $result = New-Object 'float[][]' ($matrix1.Length)
+
+    for ($i = 0; $i -lt $matrix1.Length; $i++) {
+        $result[$i] = New-Object 'float[]' ($matrix2[0].Length)
     }
-    Process {
-        for ($i = 0; $i -lt $matrix1.Length; $i++) {
-            for ($j = 0; $j -lt $matrix2[0].Length; $j++) {
-                $sum = 0
-                for ($k = 0; $k -lt $matrix1[0].Length; $k++) {
-                    $sum += $matrix1[$i][$k] * $matrix2[$k][$j]
-                }
-                $result[$i][$j] = $sum
+
+    # Verificar que las matrices sean compatibles para la multiplicación
+    if ($matrix1[0].Length -ne $matrix2.Length) {
+        throw "Las matrices no son compatibles para la multiplicación."
+    }
+
+    for ($i = 0; $i -lt $matrix1.Length; $i++) {
+        for ($j = 0; $j -lt $matrix2[0].Length; $j++) {
+            $sum = 0
+            for ($k = 0; $k -lt $matrix1[0].Length; $k++) {
+                $sum += $matrix1[$i][$k] * $matrix2[$k][$j]
             }
+            $result[$i][$j] = $sum
         }
     }
-    End {
-        # Devolver la matriz de resultados
-        return $result
-    }
+
+    # Devolver la matriz de resultados
+    return $result
 }
 
 function Get-MatrixInfo {
     param(
-        [int[][]]$matrix
+        [float[][]]$matrix
     )
     $rows = $matrix.Length
     $cols = $matrix[0].Length
@@ -99,13 +136,13 @@ function Get-MatrixInfo {
     Write-Host "Es una matriz columna: $(if ($esMatrizColumna) {'Sí'} else {'No'})"
 }
 
-# Cargar las matrices
-$matrix1 = Import-CsvMatrix -path $matriz1 -delimiter $separador
-$matrix2 = Import-CsvMatrix -path $matriz2 -delimiter $separador
-
-# Multiplicar las matrices
-$resultMatrix = Multiply-Matrices -matrix1 $matrix1 -matrix2 $matrix2
-
-# Mostrar el resultado
-$resultMatrix | ForEach-Object { $_ -join ' ' }
-Get-MatrixInfo -matrix $resultMatrix
+try {
+    $matrix1 = Get-Content $matriz1 | Import-CsvMatrix -delimiter $separador
+    $matrix2 = Get-Content $matriz2 | Import-CsvMatrix -delimiter $separador
+    $resultMatrix = Multiply-Matrices -matrix1 $matrix1 -matrix2 $matrix2
+    $resultMatrix | ForEach-Object { $_ -join ' ' }
+    Get-MatrixInfo -matrix $resultMatrix
+} catch {
+    Write-Host "Error: $_"
+    exit
+}
