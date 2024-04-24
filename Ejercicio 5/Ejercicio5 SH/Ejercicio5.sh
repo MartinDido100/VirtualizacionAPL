@@ -23,7 +23,7 @@ echo "  (+) Comision: Jueves-Noche."
 echo "  (+) Cuatrimestre: 1C - 2024."
 echo "  (+) APL: Numero 1."
 echo "  (+) Integrantes: -SANTAMARIA LOAICONO MATHIEU ANDRES, -MARTINEZ FABRICIO, -DIDOLICH MARTIN, -LASORSA LAUTARO, -QUELALI AMISTOY MARCOS EMIR."
-echo "  (+) Grupo: Numero 1."
+echo "  (+) Grupo: Numero X."
 echo "  (+) Resuelto en: Bash."
 
 echo -e "\n---------------------------------------------------- Consigna -----------------------------------------------------\n"

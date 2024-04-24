@@ -1,3 +1,0 @@
-Archivo 2:
-
-Los cambios en este archivo sí generan BackUps

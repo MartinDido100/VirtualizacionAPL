@@ -1,8 +1,96 @@
 #!/bin/bash
 
-#Veo si se mando el parametro de help
+#Ejercicio 1, Realizado en Bash.
+#Integrantes:
 
-carearArchivo(){
+#-SANTAMARIA LOAICONO, MATHIEU ANDRES
+#-MARTINEZ, FABRICIO
+#-DIDOLICH, MARTIN
+#-LASORSA, LAUTARO
+#-QUELALI AMISTOY, MARCOS EMIR
+
+# Funcion de ayuda
+function mostrar_ayuda(){
+echo -e "\n-------------------------------------------------------------------------------------------------------------------\n"
+echo -e "                                       FUNCION DE AYUDA DEL EJERCICIO 1"
+echo -e "\n-------------------------------------------------------------------------------------------------------------------\n"
+
+echo -e "\n----------------------------------------------- Informacion general -----------------------------------------------\n"
+echo "  (+) Universidad: Universidad Nacional de la Matanza."
+echo "  (+) Carrera: Ingenieria en Informatica."
+echo "  (+) Materia: Virtualizacion de Hardware."
+echo "  (+) Comision: Jueves-Noche."
+echo "  (+) Cuatrimestre: 1C - 2024."
+echo "  (+) APL: Numero 1."
+echo "  (+) Grupo: Numero X."
+echo "  (+) Resuelto en: Bash."
+
+echo -e "\n---------------------------------------------------- Consigna -----------------------------------------------------\n"
+echo "  Se necesita implementar un script que dado un archivo CSV con las notas de diferentes alumnos en diferentes materias,"
+echo "  realiza un resumen de las notas de cada alumno para luego poder publicarlo en un sitio web"
+echo "  Una vez obtenida la información, se generará un archivo JSON con la información obtenida"
+
+echo -e "\n------------------------------------------------ Que hace el Script -----------------------------------------------\n"
+echo "  Procesara un archivo CSV pasado por parametro, y generara un archivo JSON resumiendo las notas de cada alumno"
+
+echo -e "\n------------------------------------------------ Breve Descripcion  -----------------------------------------------\n"
+echo "  El programa recibe por parametro el directorio donde se encuentra el archivo CSV y la pantalla o la ruta de salida "
+
+echo -e "\n---------------------------------------------- Parametros de Entrada ----------------------------------------------\n"
+echo " -d  /--directorio:  Ruta del directorio que contiene los archivos CSV a procesar."
+echo " -s / --salida: Ruta del archivo JSON de salida" 
+echo " -p / --pantalla: Muestra la salida por pantalla, no genera el archivo JSON. Este parámetro no se puede usar a la vez que -s."
+
+echo -e "\n-------------------------------------------------- Forma de Uso ---------------------------------------------------\n"
+echo "          1) Ejecutar el script, pasandole al menos uno de los parametros, salida o pantalla."
+echo "          a) Para imprimir por pantalla debera pasarse como parametro el directorio (-d) y la pantalla (-p)"
+echo "          b) Para crear el archivo JSON debera pasarse como parametro el directorio (-d) y la salida (-s)"
+
+echo -e "\n---------------------------------------------- Ejemplos de llamadas -----------------------------------------------\n"
+echo "  ACLARACION: Se utilizaran los nombres y valores de los archivos entregados en el lote de prueba."
+echo -e "\n  Para llamar a la funcion de ayuda:"
+echo "          $./Ejercicio1.sh -h o tambien se puede usar $./Ejercicio1.sh --help"
+echo    "archivos de prueba"
+echo    "archivo materia 1115"
+echo    "12345678,b,b,b,b,b,b,b,b,m,m"
+
+echo    "archivo materia 1116"
+echo    "12345678,b,b,m,m,m,m,m,m,m,m"
+echo    "87654321,b,b,b,b,b,b,b,b,b,m"
+
+echo    "archivo materia 1118"
+echo    "87654321,b,b,b,b,b,b,b,m,m,m"
+
+echo -e "\n  Para generar el JSON"
+echo "          $./Ejercicio1.sh -d directorio -s salida"
+echo -e "para mostrar por pantalla"
+echo "          $./Ejercicio1.sh -d directorio -p pantalla"
+echo " salida esperada en ambos casos (tanto como por pantalla o en archivo json)"
+echo -e"{\n 
+"notas": [\n
+ {\n
+ "dni": "12345678",\n
+ "notas": [\n
+ { "materia": 1115, "nota": 8 },\n
+ { "materia": 1116, "nota": 2 }\n
+ ]\n
+ },\n
+ {\n
+ "dni": "87654321",\n
+ "notas": [\n
+ { "materia": 1116, "nota": 9 },\n
+ { "materia": 1118, "nota": 7 }\n
+ ]\n
+ }\n
+] }"
+
+echo -e "\n-------------------------------------------------- Aclaraciones ---------------------------------------------------\n"
+echo "  el script solo recibe 2 parametros, siendo estos directorio y pantalla o directorio y salida"
+echo " en el caso de que se pasen los parametros pantalla y salida, el script no funcionara y mostrara el error"
+echo -e "\n-------------------------------------------------------------------------------------------------------------------\n"
+}
+
+crearArchivo(){
     #Creo el archivo JSON
     touch ./resumenMesasEstudiantes.json
     echo -e "{\n\"notas\": [" > ./resumenMesasEstudiantes.json
@@ -70,14 +158,6 @@ mostrarPorPantalla(){
     done
 
     echo -e "\n] }"
-}
-
-ayuda() {
-    echo "\n-d, --directorio para pasar la ruta de los archivos .csv (Debe usarse)\n"
-    echo "-p, --pantalla para mostrar el arhivo JSON generado por pantalla\n"
-    echo "-s, --salida para mostrar la ruta del archivo JSON generado\n"
-    echo "-h, --help ayuda\n"
-    echo "ATENCION, no se puede usar -s y -p al mismo tiempo\n"
 }
 
 #Configuro como me vienen los parametros, -o para los cortos y --l para los largos, el 2> /dev/null es para que no muestre errores
