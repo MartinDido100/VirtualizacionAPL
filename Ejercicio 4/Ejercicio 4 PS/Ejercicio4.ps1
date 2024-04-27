@@ -72,7 +72,6 @@ if(-not $kill -and (-not $patron -or -not $salida)){
 $directorio=Resolve-Path $directorio
 
 if($kill){
-    Write-Host "daemon"$directorio""
     Stop-Job -Name "daemon$directorio"
     Remove-Job -Name "daemon$directorio"
     Write-Host "Se ha detenido el monitoreo en el directorio $directorio"
@@ -92,13 +91,20 @@ try{
 
 $salida=Resolve-Path $salida
 
+$evento = "Changed"
+
+if($patron -eq "create"){
+    $evento="Created"
+}
+
 $ruta = ".\monitoreo.log"
 if (-not (Test-Path -Path $ruta)) {
-    New-Item -Path $ruta -ItemType "file" -ErrorAction SilentlyContinue
+    #Mando la salida a un null para que no se muestre en pantalla 
+    New-Item -Path $ruta -ItemType "file" > $null
 }
 
 $proceso={
-    param($directorio, $pathsalida,$ruta)
+    param($directorio, $pathsalida,$ruta,$evento)
 
     $watcher = New-Object System.IO.FileSystemWatcher
     $watcher.Path = $directorio
@@ -111,29 +117,20 @@ $proceso={
 
         $formato=$Timestamp.ToString("yyyyMMdd-HHmmss")
 
-        # Verificar si el archivo no termina en ".swp"
-        if (-not ($FullPath -like "*.swp")) {
-            $formato = $Timestamp.ToString("yyyyMMdd-HHmmss")
+        $formato = $Timestamp.ToString("yyyyMMdd-HHmmss")
 
-            try {
-                Compress-Archive -Path "$directorio" -DestinationPath "$pathsalida\$formato.zip"
-            } catch {
-                Write-Host "Error durante la compresion: $_" >> $ruta
-            }
-
-            $text = "{0} was {1} at {2}" -f $FullPath, $ChangeType, $Timestamp
-            $text >> $ruta
+        try {
+            Compress-Archive -Path "$directorio" -DestinationPath "$pathsalida\$formato.zip"
+        } catch {
+            Write-Host "Error durante la compresion: $_" >> $ruta
         }
+
+        $text = "{0} was {1} at {2}" -f $FullPath, $ChangeType, $Timestamp
+        $text >> $ruta
     }
 
-    if($patron -eq "create"){
-        $evento="Created"
-    }else{
-        $evento="Changed"
-    }
-
-    . {
-        Register-ObjectEvent -InputObject $watcher -EventName "$evento"  -Action $action
+    $handlers = . {
+        Register-ObjectEvent -InputObject $watcher -EventName $evento  -Action $action
     }
 
     $watcher.EnableRaisingEvents = $true
@@ -144,6 +141,6 @@ $proceso={
 
 }
 
-$job = start-Job -Name "daemon$directorio" -ScriptBlock $proceso -ArgumentList $directorio, $salida, $ruta
+$job = start-Job -Name "daemon$directorio" -ScriptBlock $proceso -ArgumentList $directorio, $salida, $ruta,$evento
 
 Write-Host "Ha comenzado el monitoreo en segundo plano, para detenerlo debe ejecutar el script con el comando -kill"
