@@ -1,10 +1,11 @@
 #Ejercicio 5, Realizado en PowerShell.
 
 #Integrantes:
-#-ANTONIOLI, IVAN OSCAR
-#-DI NICCO, LUIS DEMETRIO
-#-LEDESMA, MIGUEL GONZALO
-#-PORCILE, FRANCO
+#-SANTAMARIA LOAICONO MATHIEU ANDRES
+#-MARTINEZ FABRICIO
+#-DIDOLICH MARTIN
+#-LASORSA LAUTARO
+#-QUELALI AMISTOY MARCOS EMIR
 
 <#
 .NOTES
@@ -47,7 +48,7 @@ Solo se busca informacion de los personajes que se ingresaron su Id o Nombre.
 .OUTPUTS
 -El resumen final de la informacion del personaje se hara por pantalla y se generara un archivo con dicha informacion para evitar consultar la API
 nuevamente en caso de solicitar informacion repetida.
--El formato del archivo sera [Id]-[Nombre] y se guardara en el directorio donde se encuentra el script.
+-El formato del archivo sera [Id] o [Nombre] y se guardara en el directorio donde se encuentra el script.
 .EXAMPLE
 ACLARACION:
     Para llamar a la funcion de ayuda:
@@ -57,126 +58,127 @@ Si se indica el nombre del personaje nada mas
     >./Ejercicio5.ps1 -nombre personaje
         
     Resultado esperado: 
-        Informacion del pokemon:
-        Id: 25
-        Name: pikachu
-        Height: 4
-        Weight: 60
-        Types: electric
+        Informacion del personaje:
+        Id: 1
+        Name: Rick Sanchez  
+        Status: Alive
+        Species: Human
+        Gender: Male
+        Origin: Earth(C-137)
+        Location: Citadel of Ricks
 .EXAMPLE
-Si se indica el nombre de varios pokemon
-    >./Ejercicio5.ps1 -nombre pikachu, nidorina 
+Si se indica el nombre de varios personajes
+    >./Ejercicio5.ps1 -nombre "Rick Sanchez", "Morty Smith" 
         
     Resultado esperado: 
-        Informacion del pokemon:
-        Id: 25
-        Name: pikachu
-        Height: 4
-        Weight: 60
-        Types: electric
+        Informacion del personaje:
+        Id: 1
+        Name: Rick Sanchez  
+        Status: Alive
+        Species: Human
+        Gender: Male
+        Origin: Earth(C-137)
+        Location: Citadel of Ricks
         ---------------------------
-        Informacion del pokemon:
-        Id: 30
-        Name: nidorina
-        Height: 8
-        Weight: 200
-        Types: poison
+        Informacion del personaje:
+        Id: 2
+        Name: Morty Smith 
+        Status: Alive
+        Species: Human
+        Gender: Male
+        Origin: unknown
+        Location: Citadel of Ricks
         ---------------------------
 .EXAMPLE
-Si se indica el Id del pokemon nada mas
-    >./Ejercicio5.ps1 -id 25
+Si se indica el Id del personaje nada mas
+    >./Ejercicio5.ps1 -id 1
         
     Resultado esperado: 
-        Informacion del pokemon:
-        Id: 25
-        Name: pikachu
-        Height: 4
-        Weight: 60
-        Types: electric
+        Informacion del personaje:
+        Id: 1
+        Name: Rick Sanchez  
+        Status: Alive
+        Species: Human
+        Gender: Male
+        Origin: Earth(C-137)
+        Location: Citadel of Ricks
 .EXAMPLE
-Si se indica el Id de varios pokemon
-    >./Ejercicio5.ps1 -id 25,35
+Si se indica el Id de varios personajes
+    >./Ejercicio5.ps1 -id 1,2
         
     Resultado esperado: 
-        Informacion del pokemon:
-        Id: 25
-        Name: pikachu
-        Height: 4
-        Weight: 60
-        Types: electric
+        Informacion del personaje:
+        Id: 1
+        Name: Rick Sanchez  
+        Status: Alive
+        Species: Human
+        Gender: Male
+        Origin: Earth(C-137)
+        Location: Citadel of Ricks
         ---------------------------
-        Informacion del pokemon:
-        Id: 35
-        Name: clefairy
-        Height: 6
-        Weight: 75
-        Types: fairy
+        Informacion del personaje:
+        Id: 2
+        Name: Morty Smith 
+        Status: Alive
+        Species: Human
+        Gender: Male
+        Origin: unknown
+        Location: Citadel of Ricks
         ---------------------------
 .EXAMPLE
-Si se indica el Id y nombre de los pokemones.
-    >./Ejercicio5.ps1 -id 25,70 -nombre bulbasaur,clefairy
+Si se indica el Id o nombre de los personajes.
+    >./Ejercicio5.ps1 -id 3 -nombre rick, morty
         
     Resultado esperado:
-        Informacion del pokemon:
-        Id: 25
-        Name: pikachu
-        Height: 4
-        Weight: 60
-        Types: electric
+        Informacion del personaje:
+        Id: 3
+        Name: Summer Smith
+        Status: Alive
+        Species: Human
+        Gender: Female
+        Origin: Earth (Replacement Dimension)
+        Location: Earth (Replacement Dimension)
         ---------------------------
-        Informacion del pokemon:
-        Id: 70
-        Name: weepinbell
-        Height: 10
-        Weight: 64
-        Types: grass poison
-        ---------------------------
-        Informacion del pokemon:
+        Informacion del personaje:
         Id: 1
-        Name: bulbasaur
-        Height: 7
-        Weight: 69
-        Types: grass poison
+        Name: Rick Sanchez
+        Status: Alive
+        Species: Human
+        Gender: Male
+        Origin: Earth (C-137)
+        Location: Citadel of Ricks
         ---------------------------
-        Informacion del pokemon:
-        Id: 35
-        Name: clefairy
-        Height: 6
-        Weight: 75
-        Types: fairy
+        Informacion del personaje:
+        Id: 2
+        Name: Morty Smith
+        Status: Alive
+        Species: Human
+        Gender: Male
+        Origin: unknown
+        Location: Citadel of Ricks
         ---------------------------
 .EXAMPLE
-Si se repite el id o el nombre del pokemon, se mostraran los datos duplicados
-    >./Ejercicio5.ps1 -id 25,25 -nombre pikachu,pikachu
+Si se repite el id o el nombre del personaje, se mostraran los datos duplicados
+    >./Ejercicio5.ps1 -nombre morty morty
 
     Resultado esperado:
-        Informacion del pokemon:
-        Id: 25
-        Name: pikachu
-        Height: 4
-        Weight: 60
-        Types: electric
+    Informacion del personaje:
+        Id: 2
+        Name: Morty Smith
+        Status: Alive
+        Species: Human
+        Gender: Male
+        Origin: unknown
+        Location: Citadel of Ricks
         ---------------------------
-        Informacion del pokemon:
-        Id: 25
-        Name: pikachu
-        Height: 4
-        Weight: 60
-        Types: electric
-        ---------------------------
-        Informacion del pokemon:
-        Id: 25
-        Name: pikachu
-        Height: 4
-        Weight: 60
-        Types: electric
-        ---------------------------
-        Informacion del pokemon:
-        Id: 25
-        Name: pikachu
-        Height: 4
-        Weight: 60
-        Types: electric
+        Informacion del personaje:
+        Id: 2
+        Name: Morty Smith
+        Status: Alive
+        Species: Human
+        Gender: Male
+        Origin: unknown
+        Location: Citadel of Ricks
         ---------------------------
 #>
 
