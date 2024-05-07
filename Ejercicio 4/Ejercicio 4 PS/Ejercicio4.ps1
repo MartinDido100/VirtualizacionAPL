@@ -1,30 +1,60 @@
+#Ejercicio 4, Realizado en PowerShell.
+
+#Integrantes:
+#-SANTAMARIA LOAICONO MATHIEU ANDRES
+#-MARTINEZ FABRICIO
+#-DIDOLICH MARTIN
+#-LASORSA LAUTARO
+#-QUELALI AMISTOY MARCOS EMIR
+
 <#
+.NOTES
+--------------------------------------------------------------------------------------------------------------------------------
+                                                FUNCION DE AYUDA DEL EJERCICIO 4
+--------------------------------------------------------------------------------------------------------------------------------
+
+Informacion General:
+
+(+) Universidad: Universidad Nacional de la Matanza.
+(+) Carrera: Ingenieria en Informatica.
+(+) Materia: Virtualizacion de Hardware.
+(+) Comision: Jueves-Noche.
+(+) Cuatrimestre: 1C2024.
+(+) APL: Numero 1.
+(+) Integrantes: -SANTAMARIA LOAICONO MATHIEU ANDRES, -MARTINEZ FABRICIO, -DIDOLICH MARTIN, -LASORSA LAUTARO, -QUELALI AMISTOY MARCOS EMIR.
+(+) Grupo: Numero 1.
+(+) Resuelto en: PowerShell.
 .SYNOPSIS
-Analiza archivos de texto para contar palabras y caracteres, excluyendo los caracteres que especifique el usuario.
-
+Realiza el monitoreo en segundo plano de los archivos de un directorio.
 .DESCRIPTION
-Cada archivo de texto en un directorio dado es analizado, contando la cantidad de palabras y caracteres, excluyendo aquellos caracteres especificados. También proporciona estadísticas como la palabra más repetida y la frecuencia de cada caracter.
+Cada vez que se detecte un cambio, ya sea creacion o modificacion de un archivo (no se monitorea borrado), 
+el script realiza un backup del directorio monitoreado y crea un registro en un archivo de log 
+con la fecha, hora, ruta del directorio monitoreado y un detalle de los resultados encontrados.
 
+Aclaraciones:
+-Este script analiza el directorio pasado por parametro y sus subdirectorios.
+-El archivo de log se va a guardar en el mismo directorio donde se encuentra el script.
+-No se pueden almacenar los backups en el mismo directorio que se esta monitoreando.
+-Si el directorio a monitorear y el directorio donde se van a generar los back-up es el mismo el comportamiento del script es impredecible,
+ ya que cada vez que se genera un back-up se estaría disparando un nuevo evento y así indefinidamente, por lo que esto no estara permitido.
+-Si se ejecuta dos o más veces el mismo script sobre el mismo directorio de monitoreo y back-up se generará una solo archivo .zip pero en el
+ archivo de monitoreo aparecerán las modificaciones o creaciones tantas veces como se haya ejecutado el script
 .PARAMETER directorio
-El directorio que contiene los archivos de texto a procesar. Este parámetro es obligatorio.
-
-.PARAMETER extension
-La extensión de los archivos de texto a procesar. Este parámetro es obligatorio.
-
-.PARAMETER omitir
-Una cadena de caracteres que se deben omitir durante el análisis. Si no se especifica, no se omitirá ningún caracter.
-
-.PARAMETER separador
-El separador utilizado para dividir el texto en palabras. El valor predeterminado es un espacio (' ').
-
+-directorio: Ruta del directorio a monitorear. Es obligatorio
+.PARAMETER salida
+-salida: Ruta del directorio en donde se van a crear los backups.
+.INPUTS
+-Solo se va a monitoriar  el directorio indicado y sus subdirectorios.
+-Las rutas pueden ser relativas o absolutas y es recomendable indicarlas entre comillas simples por si los nombres contienen espacios.
+.OUTPUTS
+-El resumen de los cambios efectuados en el directorio estaran disponibles en el archivo de log llamado "monitoreo.log"
 .EXAMPLE
-PS> Procesar-Archivos -directorio "C:\Textos" -extension "txt" -omitir "abc" -separador " "
-Este ejemplo procesa todos los archivos .txt en el directorio C:\Textos, omitiendo las letras a, b y c.
-
+ACLARACION:
+    Para llamar a la funcion de ayuda:
+        >get-help ./Ejercicio4.ps1 -Full
 .EXAMPLE
-PS> Procesar-Archivos -directorio "C:\Textos" -extension "txt"
-Este ejemplo procesa todos los archivos .txt en el directorio C:\Textos sin omitir ningún caracter.
-
+Si se indica el directorio y la salida
+    >./Ejercicio4.ps1 -directorio './Directorio/' -salida './Backup'
 #>
 
 param (
@@ -66,6 +96,11 @@ if($kill -and ($patron -or $salida)){
 
 if(-not $kill -and (-not $patron -or -not $salida)){
     Write-Host "Los parametros 'patron' y 'salida' son obligatorios si no se especifica el parametro 'kill'"
+    return
+}
+
+if($directorio -eq $salida){
+    Write-Host "Los parametros 'directorio' y 'salida' no pueden ser iguales"
     return
 }
 

@@ -22,7 +22,7 @@ Informacion General:
 (+) Cuatrimestre: 1C2024.
 (+) APL: Numero 1.
 (+) Integrantes: -SANTAMARIA LOAICONO MATHIEU ANDRES, -MARTINEZ FABRICIO, -DIDOLICH MARTIN, -LASORSA LAUTARO, -QUELALI AMISTOY MARCOS EMIR.
-(+) Grupo: Numero C1.
+(+) Grupo: Numero 1.
 (+) Resuelto en: PowerShell.
 .SYNOPSIS
 Permite buscar informacion de los personajes de Rick y Morty por su id o su nombre a traves de la api https://rickandmortyapi.com/documentation/#character
