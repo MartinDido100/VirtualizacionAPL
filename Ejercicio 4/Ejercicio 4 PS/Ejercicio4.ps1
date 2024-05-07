@@ -43,6 +43,13 @@ Aclaraciones:
 -directorio: Ruta del directorio a monitorear. Es obligatorio
 .PARAMETER salida
 -salida: Ruta del directorio en donde se van a crear los backups.
+.PARAMETER patron
+-patron: Patrón a buscar una vez detectado un cambio en los archivos monitoreados. (Puede ser create o modify)
+.PARAMETER kill
+-kill: Flag que se utiliza para indicar que el script debe
+detener el demonio previamente iniciado.
+Este parámetro solo se puede usar junto con -d/--
+directorio/-directorio.
 .INPUTS
 -Solo se va a monitoriar  el directorio indicado y sus subdirectorios.
 -Las rutas pueden ser relativas o absolutas y es recomendable indicarlas entre comillas simples por si los nombres contienen espacios.
@@ -100,7 +107,7 @@ if(-not $kill -and (-not $patron -or -not $salida)){
 }
 
 if($directorio -eq $salida){
-    Write-Host "Los parametros 'directorio' y 'salida' no pueden ser iguales"
+    Write-Host "Los parametros 'directorio' y 'salida' no pueden ser iguales."
     return
 }
 

@@ -340,5 +340,5 @@ if(($validezNombre)){
 }
 
 else{
-    Write-Host "No se ingresaron Ids"
+    Write-Host "No se ingresaron nombres"
 }

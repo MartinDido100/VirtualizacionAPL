@@ -1,38 +1,101 @@
+#Ejercicio 1, Realizado en PowerShell.
+
+#Integrantes:
+#-SANTAMARIA LOAICONO MATHIEU ANDRES
+#-MARTINEZ FABRICIO
+#-DIDOLICH MARTIN
+#-LASORSA LAUTARO
+#-QUELALI AMISTOY MARCOS EMIR
+
 <#
+.NOTES
+--------------------------------------------------------------------------------------------------------------------------------
+                                                FUNCION DE AYUDA DEL EJERCICIO 1
+--------------------------------------------------------------------------------------------------------------------------------
+
+ 
+Informacion General:
+
+(+) Universidad: Universidad Nacional de la Matanza.
+(+) Carrera: Ingenieria en Informatica.
+(+) Materia: Virtualizacion de Hardware.
+(+) Comision: Jueves-Noche.
+(+) Cuatrimestre: 1C2024.
+(+) APL: Numero 1.
+(+) Integrantes: -SANTAMARIA LOAICONO MATHIEU ANDRES, -MARTINEZ FABRICIO, -DIDOLICH MARTIN, -LASORSA LAUTARO, -QUELALI AMISTOY MARCOS EMIR.
+(+) Grupo: Numero 1.
+(+) Resuelto en: PowerShell.
 .SYNOPSIS
-Este script toma archivos CSV de notas de alumnos y genera un archivo JSON con las notas finales de cada alumno.
-
+Se necesita implementar un script que dado un archivo CSV con las notas de diferntes alumnos en diferentes materias,"
+realizar un resumen de las notas de cada alumno para luego poder publicarlo en un sitio web"
+Una vez obtenida la información, se generará un archivo JSON con la información obtenida"
 .DESCRIPTION
-Se procesan las notas conceptuales y se les asigna un valor numérico antes de guardar las notas en variables JSON.
-Puede imprimir los resultados por pantalla o crear un archivo JSON con los resultados.
+El programa recibe por parametro el directorio donde se encuentra el archivo CSV y la pantalla o la
+ruta de salida, procesara dicho archivo y realizara un resumen de las notas de cada alumno y luego generara un archivo
+JSON con la informacion obtenida y en el directorio indicado por parametro.
 
+.PARAMETER ayuda
+-help: Funcion de ayuda del script. Descripcion del funcionamiento.
 .PARAMETER directorio
-Ruta del directorio que contiene los archivos CSV a procesar.
-
+-directorio: Ruta del directorio que contiene los archivos CSV a procesar
 .PARAMETER salida
-Ruta del archivo JSON de salida.
-
+-salida: Ruta del archivo JSON de salida
 .PARAMETER pantalla
-Muestra la salida por pantalla, no genera el archivo JSON. Este parámetro no se puede usar a la vez que -salida.
+-pantalla: Muestra la salida por pantalla, no genera el archivo JSON. Este parámetro no se puede 
+echo usar a la vez que salida
+
+.ACLARACIONES
+el script solo recibe 2 parametros, siendo estos directorio y pantalla o directorio y salida
+en el caso de que se pasen los parametros pantalla y salida, el script no funcionara y mostrara el error
+
+.INPUTS
+El archivo de entrada debe tener formato CSV donde se respete el siguiente formato:
+DNI-alumno,nota-ej-1,nota-ej-2,...,nota-ej-N
+10100100,b,r,...,m
+20200200,r,b,...,b
+    
+.OUTPUTS
+Dependiendo del parametro pasado, se generara un archivo JSON en el directorio indicado como salida, o 
+se imprimira por pantalla dicho archivo JSON sin sen guardado
 
 
 .EXAMPLE
-Get-Help .\Ejercicio1.ps1 -Full
-Muestra la ayuda completa del script.
-
-.EXAMPLE
-.\Ejercicio1.ps1 -directorio "ruta\del\directorio" -pantalla
-Procesa los archivos CSV en la ruta especificada y los muestra por pantalla.
-
-.EXAMPLE
-.\Ejercicio1.ps1 -directorio "ruta\del\directorio" -salida "resultados.json"
-Procesa los archivos CSV en la ruta especificada y guarda los resultados en un archivo JSON cuyo nombre se recibe por parámetro.
+ACLARACION: Se utilizaran los nombres y valores de los archivos entregados en el lote de prueba."
+Para llamar a la funcion de ayuda:"
+$./Ejercicio1.sh -h o tambien se puede usar $./Ejercicio1.sh --help"
+Para generar el JSON"
+/Ejercicio1.sh -d directorio -s salida
+para mostrar por pantalla
+$./Ejercicio1.sh -d directorio -p pantalla
+salida esperada en ambos casos (tanto como por pantalla o en archivo json)
+ {
+"notas": [
+ {
+ "dni": "12345678",
+ "notas": [
+ { "materia": 1115, "nota": 8 },
+ { "materia": 1116, "nota": 2 }
+ ]
+ },
+ {
+ "dni": "87654321",
+ "notas": [
+ { "materia": 1116, "nota": 9 },
+ { "materia": 1118, "nota": 7 }
+ ]
+ }
+] }"
 #>
 
 
 param(
     [Parameter(Mandatory=$true)]
-    [ValidateScript({Test-Path $_ -PathType 'Container'})]
+    [ValidateScript({
+        if (-not (Test-Path -Path $_ -PathType Container)) {
+            throw "El directorio '$_' no existe"
+        }
+        $true
+    })]
     [string]$directorio,
 
     [Parameter(Mandatory=$false)]
@@ -52,6 +115,13 @@ param(
 
 if (-not $directorio) {
     Write-Error "El parámetro -directorio es obligatorio."
+    exit
+}
+
+$archivosCsv = Get-ChildItem -Path "$directorio/*.csv"
+
+if($archivosCsv.Count -eq 0){
+    Write-Error "No se encontraron archivos CSV en el directorio."
     exit
 }
 
@@ -115,6 +185,15 @@ function Get-manejarArchivos() {
         $jsonObj = @()
     }
     Process {
+        if($value.Extension -ne ".csv"){
+            Write-Error "El archivo $value no es un archivo CSV."
+            exit
+        }
+        
+        if($value.BaseName -notmatch "^\d+$"){
+            Write-Error "El archivo $value tiene un nombre invalido."
+            return;
+        }
         $contenidoCsv = Get-Content -Path $value.FullName
         $contenidoCsv | Get-csvAArray -materia $value.BaseName
     }

@@ -1,30 +1,107 @@
-<#
-.SYNOPSIS
-Analiza archivos de texto para contar palabras y caracteres, excluyendo los caracteres que especifique el usuario.
+#Ejercicio 3, Realizado en PowerShell.
 
+#Integrantes:
+#-SANTAMARIA LOAICONO MATHIEU ANDRES
+#-MARTINEZ FABRICIO
+#-DIDOLICH MARTIN
+#-LASORSA LAUTARO
+#-QUELALI AMISTOY MARCOS EMIR
+
+<#
+.NOTES
+--------------------------------------------------------------------------------------------------------------------------------
+                                                FUNCION DE AYUDA DEL EJERCICIO 3
+--------------------------------------------------------------------------------------------------------------------------------
+
+Informacion General:
+
+(+) Universidad: Universidad Nacional de la Matanza.
+(+) Carrera: Ingenieria en Informatica.
+(+) Materia: Virtualizacion de Hardware.
+(+) Comision: Jueves-Noche.
+(+) Cuatrimestre: 1C2024.
+(+) APL: Numero 1.
+(+) Integrantes: -SANTAMARIA LOAICONO MATHIEU ANDRES, -MARTINEZ FABRICIO, -DIDOLICH MARTIN, -LASORSA LAUTARO, -QUELALI AMISTOY MARCOS EMIR.
+(+) Grupo: Numero 1.
+(+) Resuelto en: PowerShell.
+.SYNOPSIS
+Analiza los archivos de texto de un directorio y realiza un informe acerca de las palabras leidas.
 .DESCRIPTION
-Cada archivo de texto en un directorio dado es analizado, contando la cantidad de palabras y caracteres, excluyendo aquellos caracteres especificados. También proporciona estadísticas como la palabra más repetida y la frecuencia de cada caracter.
+Analiza los archivos de texto en un directorio pasado por parametro e informa un resumen final con:
+    -La cantidad de ocurrencias de palabras de X caracteres.
+    -La palabra o palabras que más ocurrencias tuvo, puede ser más de una si la cantidad de ocurrencias es igual.
+    -La cantidad total de palabras.
+    -El promedio de palabras por archivo (cantidad de palabras sobre el total de archivos analizados)
+    -El carácter más repetido.
+
+Aclaraciones:
+
+-Busca los archivos dentro del directorio recursivamente, es decir, que se buscara dentro del directorio y los subdirectorios
+los archivos que cumplan con las extensiones indicadas.
+
+-Las extensiones no hay que pasarlas entre comillas.
+    Formas validas de pasar las extensiones:    
+    -extension txt, log, html, csv
+    
+    Forma invalida de pasar las extensiones:
+    -extension "txt, log, html"
+
+-El analisis de este script NO es case sensitive, es decir, no se distingue entre mayusculas y minusculas.
+    Por ejemplo: "Hola" y "hola" seran consideradas la misma palabra, por lo que si en el archivo aparecen escritas de ambas
+    formas, seran consideradas como la misma palabra con 2 ocurrencias.
+
+-En el resumen final, para diferenciar las distintas formas en las que aparecio la palabra en los archivos se la muestra
+encerrada entre parentesis. 
+    
+    Por ejemplo: 
+    -Cantidad maxima de ocurrencias: 2
+    -Palabra(s) con mas ocurrencias: hola con dos ocurrencias
+
+    En este caso, la palabra "Hola" se la escribio en los archivos tanto con la 'H' en mayuscula como con la 'h' en minuscula. 
+    Pero en total, sumando las ocurrencias de "Hola" y de "hola", llego al maximo de ocurrencias (2 ocurrencias).
+    
+    Esto no significa que "Hola" tuvo 2 ocurrencias individualmente y "hola" tuvo otras 2 ocurrencias, sino que la suma de ambas
+    dio como resultado las 2 ocurrencias.
 
 .PARAMETER directorio
-El directorio que contiene los archivos de texto a procesar. Este parámetro es obligatorio.
-
+-directorio: Ruta del directorio a analizar. Opcional, en caso de no informarse se ejecuta sobre la ruta actual.
 .PARAMETER extension
-La extensión de los archivos de texto a procesar. Este parámetro es obligatorio.
-
-.PARAMETER omitir
-Una cadena de caracteres que se deben omitir durante el análisis. Si no se especifica, no se omitirá ningún caracter.
-
+-extension: Si esta presente, indica las extensiones de los archivos a analizar. Opcional. Por defecto analiza todo tipo de archivo.
 .PARAMETER separador
-El separador utilizado para dividir el texto en palabras. El valor predeterminado es un espacio (' ').
+-separadorUn carácter separador de palabras. Opcional. Valor por defecto: “ “ (espacio). Ignora si es mayúscula o minúscula.
+.PARAMETER omitir
+-omitir: Array de caracteres a buscar en las palabras del archivo. Si ese carácter se encuentra en la palabra, esta no debe ser contabilizada.
+
+.INPUTS
+Solo se analizan los archivos de texto plano dentro del directorio indicado. 
+Quedan excluidos del analisis archivos de otro tipo tales como imagenes, videos, audios, etc.
+.OUTPUTS
+El resumen final se hara por pantalla.
+.EXAMPLE
+ACLARACION: Se utilizaran los nombres y valores de los archivos entregados en el lote de prueba.
+    Para llamar a la funcion de ayuda:
+        >get-help ./Ejercicio3.ps1 -Full
+.EXAMPLE
+Si se indica el directorio y las extensiones, se analizaran todos los archivos 
+que contenga el directorio indicado, que cumplan con las extensiones indicadas.
+    >./Ejercicio3.ps1 -directorio ./Directorio/ -extension txt
+        
+    Resultado esperado: 
+      Resumen Final:
+	Palabras de 4 caracteres: 2
+	Palabra/s mas repetida/s: Hola con 2 ocurrencias
+	Cantidad total de palabras: 2
+	Promedio de palabras por archivo: 0.666666666666667
+	Caracter/es mas repetido/s: H, l, a con 2 ocurrencias
 
 .EXAMPLE
-PS> Procesar-Archivos -directorio "C:\Textos" -extension "txt" -omitir "abc" -separador " "
-Este ejemplo procesa todos los archivos .txt en el directorio C:\Textos, omitiendo las letras a, b y c.
+Si se indica una extension y no hay ningun archivo de esa extension en el directorio indicado se muestra el siguiente mensaje:
 
-.EXAMPLE
-PS> Procesar-Archivos -directorio "C:\Textos" -extension "txt"
-Este ejemplo procesa todos los archivos .txt en el directorio C:\Textos sin omitir ningún caracter.
+    >./Ejercicio3.ps1 -directorio ./Directorio/ -extension xml -omitir "a"
 
+    Resultado esperado:
+        
+	"No se encontraron archivos con la extensión '$extension' en el directorio '$directorio'.
 #>
 
 param(
@@ -123,6 +200,8 @@ function Procesar-Palabras {
 
 Write-Host "$directorio\*.$extension"
 $archivos = Get-ChildItem "$directorio\*$extension" -File
+
+Write-Host $archivos
 
 if ($archivos.Count -gt 0) {
     $archivos | Get-Content -Encoding UTF8 | Procesar-Palabras -letrasOmitir "$omitir"

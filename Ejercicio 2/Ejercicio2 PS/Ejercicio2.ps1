@@ -1,34 +1,87 @@
+#Ejercicio 2, Realizado en PowerShell.
+#Integrantes:
+#-SANTAMARIA LOAICONO, MATHIEU ANDRES
+#-MARTINEZ, FABRICIO
+#-DIDOLICH, MARTIN
+#-LASORSA, LAUTARO
+#-QUELALI AMISTOY, MARCOS EMIR
+
 <#
-.SYNOPSIS
-Este script toma dos archivos CSV y ejecuta una multiplicación de matrices.
-
-.DESCRIPTION
-Cada archivo debe contener una matriz, donde cada fila es una línea y los elementos están separados por un delimitador.
-El script importa las matrices de los archivos CSV y las multiplica.
-El resultado se muestra por pantalla y se indica si la matriz resultante es cuadrada, fila o columna.
-
-.PARAMETER matriz1
-Ruta del archivo CSV que contiene la primera matriz.
-
-.PARAMETER matriz2
-Ruta del archivo CSV que contiene la segunda matriz.
-
-.PARAMETER separador
-Carácter que se utiliza para separar los elementos de las matrices. Por defecto es la coma. No puede utilizarse un número como separador, ni un signo "-"
-
-.EXAMPLE
-Get-Help .\Ejercicio1.ps1 -Full
-Muestra la ayuda completa del script.
-
-.EXAMPLE
-.\Ejercicio2.ps1 -matriz1 "ruta\de\la\matriz1.csv" -matriz2 "ruta\de\la\matriz2.csv"
-
-.EXAMPLE
-.\Ejercicio2.ps1 -matriz1 "ruta\de\la\matriz1.csv" -matriz2 "ruta\de\la\matriz2.csv" -separador ";"
-
 .NOTES
-Ambas matrices deben ser compatibles para la multiplicación.
-La matriz resultante tendrá el mismo número de filas que la primera matriz y el mismo número de columnas que la segunda matriz.
+---------------------------------------------------------------------------------------------------------------------------
+                                                FUNCION DE AYUDA DEL EJERCICIO 2
+---------------------------------------------------------------------------------------------------------------------------
+
+Informacion General:
+
+    (+) Universidad: Universidad Nacional de la Matanza.
+    (+) Carrera: Ingenieria en Informatica.
+    (+) Materia: Virtualizacion de Hardware.
+    (+) Comision: Jueves-Noche.
+    (+) Cuatrimestre: 1C2024.
+    (+) APL: Numero 1.
+    (+) Integrantes: -SANTAMARIA LOAICONO MATHIEU ANDRES, -MARTINEZ FABRICIO, -DIDOLICH MARTIN, -LASORSA LAUTARO, -QUELALI AMISTOY MARCOS EMIR.
+    (+) Grupo: Numero 1.
+    (+) Resuelto en: PowerShell.
+.SYNOPSIS
+Este script realiza una multiplicacion entre 2 matrices y analiza el resultado obtenido
+.DESCRIPTION
+Permite leer dos matrices de enteros desde un archivo, las multiplica e informa:
+    - Orden de la matriz.
+            El orden de la matriz nos indica la cantidad de filas y columnas, por ejemplo: 3x5 (3 filas y 5 columnas).
+    - Si es cuadrada.
+            Una matriz es cuadrada cuando la cantidad de filas y columnas son iguales.
+    - Si es identidad.
+            Una matriz es identidad cuando su diagonal principal esta compuesta por unos y el resto de las celdas por ceros.
+    - Si es nula.
+            Una matriz es nula si tiene todas las celdas en cero.
+    - Si es fila.
+            Una matriz es fila si tiene una sola fila.
+    - Si es columna. 
+            Una matriz es columna si tiene una sola columna.
+
+.PARAMETER ayuda
+-help: Funcion de ayuda del script. Descripcion del funcionamiento.
+.PARAMETER matriz1
+-matriz1: Ruta del archivo de entrada de la matriz 1
+.PARAMETER matriz2
+-matriz2: Ruta del archivo de entrada de la matriz 2
+.PARAMETER separador
+-separador: Caracter separador de valores. Opcional, por defecto es coma ','. 
+No se puede elegir un numero o un guion (para no evitar inconvenientes con numeros negativos).
+.INPUTS
+La matriz pasada por parametro debe tener el mismo numero de columnas en cada fila, como el siguiente ejemplo:"
+                                        0,2,5
+                                        4,6,7
+                                        6,4,-3
+
+Se permite cualquier separador menos numeros y el caracter '-' (signo menos) 
+por lo que tambien se admiten los siguientes formatos entre otros:
+                1$3$5               1/3/5           1a3a5
+                4$6$7               4/6/7           4a6a7
+                6$4$-3              6/4/-3          6a4a-3
+
+Se puede dejar como MÁXIMO un ÚNICO salto de línea al final de la matriz.
+.OUTPUTS
+La salida siempre se hace por pantalla.
+.EXAMPLE
+ACLARACION: Se utilizaran los nombres y valores de los archivos entregados en el lote de prueba.
+    Para llamar a la funcion de ayuda:
+        >get-help ./Ejercicio2.ps1 -Full
+.EXAMPLE
+    Para analizar una matriz que tiene como separador una coma ",":
+        >./Ejercicio2.ps1 -matriz1[Path del archivo de entrada]
+        >./Ejercicio2.ps1 -matriz1matriz.txt
+.EXAMPLE
+    Para que el caso de tener una matriz con un separador distinto a una coma ",":
+        >./Ejercicio2.ps1 -matriz1 [Path del archivo de entrada] -separador [Caracter Separador]
+        >./Ejercicio2.ps1 -matriz1 matriz.csv -separador "$"
+.EXAMPLE
+    Resultado esperado de analizar matriz.csv: 
+        3 x 3
+        Es cuadrada
+        No es una matriz nula
+        No es matriz fila ni matriz columna
 #>
 
 param(

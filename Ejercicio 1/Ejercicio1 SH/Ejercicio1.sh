@@ -1,8 +1,6 @@
 #!/bin/bash
-
 #Ejercicio 1, Realizado en Bash.
 #Integrantes:
-
 #-SANTAMARIA LOAICONO, MATHIEU ANDRES
 #-MARTINEZ, FABRICIO
 #-DIDOLICH, MARTIN
@@ -22,45 +20,38 @@ echo "  (+) Materia: Virtualizacion de Hardware."
 echo "  (+) Comision: Jueves-Noche."
 echo "  (+) Cuatrimestre: 1C - 2024."
 echo "  (+) APL: Numero 1."
-echo "  (+) Grupo: Numero X."
+echo "  (+) Integrantes: -SANTAMARIA LOAICONO MATHIEU ANDRES, -MARTINEZ FABRICIO, -DIDOLICH MARTIN, -LASORSA LAUTARO, -QUELALI AMISTOY MARCOS EMIR."
+echo "  (+) Grupo: Numero 1."
 echo "  (+) Resuelto en: Bash."
 
 echo -e "\n---------------------------------------------------- Consigna -----------------------------------------------------\n"
-echo "  Se necesita implementar un script que dado un archivo CSV con las notas de diferentes alumnos en diferentes materias,"
-echo "  realiza un resumen de las notas de cada alumno para luego poder publicarlo en un sitio web"
+echo "  Se necesita implementar un script que dado un archivo CSV con las notas de diferntes alumnos en diferentes materias,"
+echo "  realizar un resumen de las notas de cada alumno para luego poder publicarlo en un sitio web"
 echo "  Una vez obtenida la información, se generará un archivo JSON con la información obtenida"
 
 echo -e "\n------------------------------------------------ Que hace el Script -----------------------------------------------\n"
-echo "  Procesara un archivo CSV pasado por parametro, y generara un archivo JSON resumiendo las notas de cada alumno"
+echo "  procesara un archivo CSV pasado por parametro, y generara un archivo JSON resuemiendo las notas de cada alumno"
 
 echo -e "\n------------------------------------------------ Breve Descripcion  -----------------------------------------------\n"
-echo "  El programa recibe por parametro el directorio donde se encuentra el archivo CSV y la pantalla o la ruta de salida "
+echo "  El programa recibe por parametro el directorio donde se encuentra el archivo CSV y la pantalla o la"
+echo "  ruta de salida "
 
 echo -e "\n---------------------------------------------- Parametros de Entrada ----------------------------------------------\n"
 echo " -d  /--directorio:  Ruta del directorio que contiene los archivos CSV a procesar."
 echo " -s / --salida: Ruta del archivo JSON de salida" 
-echo " -p / --pantalla: Muestra la salida por pantalla, no genera el archivo JSON. Este parámetro no se puede usar a la vez que -s."
+echo " -p / --pantalla: Muestra la salida por pantalla, no genera el archivo JSON. Este parámetro no se puede "
+echo "usar a la vez que -s."
+
 
 echo -e "\n-------------------------------------------------- Forma de Uso ---------------------------------------------------\n"
 echo "          1) Ejecutar el script, pasandole al menos uno de los parametros, salida o pantalla."
-echo "          a) Para imprimir por pantalla debera pasarse como parametro el directorio (-d) y la pantalla (-p)"
-echo "          b) Para crear el archivo JSON debera pasarse como parametro el directorio (-d) y la salida (-s)"
+echo "          a) para imprimir por pantalla debera pasarse como parametro el directorio (-d) y la pantalla (-p)"
+echo "          b) para crear el archivo JSON debera pasarse como parametro el directorio (-d) y la salida (-s)"
 
 echo -e "\n---------------------------------------------- Ejemplos de llamadas -----------------------------------------------\n"
 echo "  ACLARACION: Se utilizaran los nombres y valores de los archivos entregados en el lote de prueba."
 echo -e "\n  Para llamar a la funcion de ayuda:"
 echo "          $./Ejercicio1.sh -h o tambien se puede usar $./Ejercicio1.sh --help"
-echo    "archivos de prueba"
-echo    "archivo materia 1115"
-echo    "12345678,b,b,b,b,b,b,b,b,m,m"
-
-echo    "archivo materia 1116"
-echo    "12345678,b,b,m,m,m,m,m,m,m,m"
-echo    "87654321,b,b,b,b,b,b,b,b,b,m"
-
-echo    "archivo materia 1118"
-echo    "87654321,b,b,b,b,b,b,b,m,m,m"
-
 echo -e "\n  Para generar el JSON"
 echo "          $./Ejercicio1.sh -d directorio -s salida"
 echo -e "para mostrar por pantalla"
@@ -243,9 +234,16 @@ declare -A alumnos
 
 for archivo in "$rutaArchivos"/*; do
     codigo_mesa=$(basename "$archivo" ".csv")
+    if [[ $codigo_mesa =~ [^0-9] ]]; then
+        echo "El archivo $archivo no tiene un nombre valido"
+        continue
+    fi
     if [ -f "$archivo" ]; then
         cantNotas=$(awk -F';' '{print NF-1; exit 1}' $archivo)
-
+        if((cantNotas == 0)); then
+            echo "Error en el archivo $archivo, se uso otro separador al deseado"
+            continue
+        fi
         while IFS=';' read -r dni notas; do
             sumaTotal=0
             pesoNota=$(awk "BEGIN { printf \"%.2f\", 10 / $cantNotas }")
@@ -267,11 +265,7 @@ for archivo in "$rutaArchivos"/*; do
 
             alumnos["$dni"]+=$codigo_mesa,$notaFinal,
 
-        done < <(awk -F';' 'NR > 1 {print $0}' $archivo) # Leo a partir de la segunda linea del archivo, y con el <(..) hago que se trate como un archivo y no como un string
-
-        for alumno in "${!alumnos[@]}"; do
-            echo "DNI: $alumno, Valor: ${alumnos[$alumno]}"
-        done
+        done < <(awk -F';' 'NR {print $0}' $archivo) # Leo a partir de la segunda linea del archivo, y con el <(..) hago que se trate como un archivo y no como un string
     fi
 done
 
