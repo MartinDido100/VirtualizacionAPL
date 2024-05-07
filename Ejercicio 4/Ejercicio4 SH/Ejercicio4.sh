@@ -20,7 +20,7 @@ echo "  (+) Universidad: Universidad Nacional de la Matanza."
 echo "  (+) Carrera: Ingenieria en Informatica."
 echo "  (+) Materia: Virtualizacion de Hardware."
 echo "  (+) Comision: Jueves-Noche."
-echo "  (+) Cuatrimestre: 21C - 2024."
+echo "  (+) Cuatrimestre: 1C - 2024."
 echo "  (+) APL: Numero 1."
 echo "  (+) Grupo: Numero 1."
 echo "  (+) Resuelto en: Bash."
@@ -106,19 +106,8 @@ echo "          2) Ejecutar el script, pasandole el path del directorio que se q
 echo "          3) Pasar el directorio donde se guardaran los archivos de backup, con el parametro -s o --salida."
 echo "          4) Una vez ejecutado el script, se muestra por panatalla el PID del proceso de monitoreo para facilitar la detencion."
 echo "             En caso de querer detener el monitoreo puede utilizar el siguiente comando:"
-echo '                  $kill [pidDemonio]'
-
-echo -e "\n-----------------------------------  Tutorial de desinstalacion de inotify-tools ----------------------------------\n"
-echo "  Pasos para la desinstalacion:"
-echo "      1) Abra una terminal."
-echo "      2) Desinstale inotify-tools con el siguiente comando: "
-echo '          $sudo apt-get remove inotify-tools'
-echo "      En este paso si es la primera vez que usa el comando sudo, debera ingresar la contrasena del usuario root."
-echo "      3) (Opcional) Elimine los paquetes huerfanos con el siguiente comando: "
-echo '          $sudo apt-get autoremove'
-echo "      4) Verifique la desinstalacion con el siguiente comando: "
-echo '          $inotifywait --version'
-echo "      Deberia recibir un mensaje de error indicando que el comando no se encuentra."
+echo '$./Ejercicio4.sh -d/--directorio [Path del directorio a monitorear] -s/--salida [Path del directorio de backups] -p/--patron [modify o create]'
+echo '$./Ejercicio4.sh -d ./Directorio -k/--kill'
 
 echo -e "\n---------------------------------------------- Ejemplos de llamadas -----------------------------------------------\n"
 echo "  ACLARACION: Se utilizaran los nombres y valores de los archivos entregados en el lote de prueba."

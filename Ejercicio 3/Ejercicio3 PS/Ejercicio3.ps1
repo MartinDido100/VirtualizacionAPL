@@ -117,15 +117,12 @@ function Procesar-Palabras {
         Write-Host "Cantidad total de palabras: $cantTotal"
         Write-Host "Promedio de palabras por archivo: $($cantTotal / 3)"
 
-        # foreach ($caracter in $caracteres.Keys) {
-        #     Write-Host "Caracter [$caracter] aparece $($caracteres[$caracter]) veces"
-        # }
-
         Write-Host "Caracter/es mas repetido/s: $caracterMayor con $maxCaracteres ocurrencias"
     }
 }
 
-$archivos = Get-ChildItem -Path "$directorio\*.$extension" -File
+Write-Host "$directorio\*.$extension"
+$archivos = Get-ChildItem "$directorio\*$extension" -File
 
 if ($archivos.Count -gt 0) {
     $archivos | Get-Content -Encoding UTF8 | Procesar-Palabras -letrasOmitir "$omitir"
