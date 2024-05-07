@@ -40,7 +40,7 @@ Aclaraciones:
 -Si se ejecuta dos o más veces el mismo script sobre el mismo directorio de monitoreo y back-up se generará una solo archivo .zip pero en el
  archivo de monitoreo aparecerán las modificaciones o creaciones tantas veces como se haya ejecutado el script
 .PARAMETER directorio
--directorio: Ruta del directorio a monitorear. Es obligatorio
+-directorio: Ruta del directorio a monitorear. Es obligatorio.
 .PARAMETER salida
 -salida: Ruta del directorio en donde se van a crear los backups.
 .INPUTS
