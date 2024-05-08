@@ -149,8 +149,13 @@ function Get-csvAArray() {
         if ($value -match "DNI-alumno") { return }
 
         # Separar los valores por comas
-        $valores = $value -split ","
+        $valores = $value -split ";"
         $dni = $valores[0]
+        if($dni -notmatch "^\d+$"){
+            Write-Error "El DNI $dni no es valido."
+            return
+        }
+
         $notasAlumno = $valores[1..($valores.Length - 1)]
 
         # Calcular la nota final

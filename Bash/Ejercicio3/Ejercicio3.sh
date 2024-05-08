@@ -132,7 +132,7 @@ do
         -d | --directorio)
             directorio=$2
 
-            if [ $2 = '-h' ] || [ $2 = '--help' ]; then
+            if [ "$2" = '-h' ] || [ "$2" = '--help' ]; then
                 ayuda
                 exit 0
             fi
@@ -177,12 +177,12 @@ if [ "$extension" = "false" ]; then
 fi
 
 #Verifico si la ruta es valida
-if [ ! -d $rutaArchivos ]; then
+if [ ! -d "$directorio" ]; then
     echo "La ruta de los archivos no es valida"
     exit 1
 fi
 
-cantArchivos=$(ls $directorio/*.$extension | wc -l)
+cantArchivos=$(ls "$directorio"/*.$extension | wc -l)
 
 letrasOmitir=$(awk -v omitir="$omitir" 'BEGIN{gsub(/[\[\],]/,"",omitir); print omitir}')
 
@@ -191,7 +191,7 @@ if [ $letrasOmitir = " " ]; then
     exit 1
 fi
 
-cat $directorio/*.$extension | awk -v cArch="$cantArchivos" -v letrasOmitir="$letrasOmitir" -F"$separador" '
+cat "$directorio"/*.$extension | awk -v cArch="$cantArchivos" -v letrasOmitir="$letrasOmitir" -F"$separador" '
 
     BEGIN{
         mayorAct=0

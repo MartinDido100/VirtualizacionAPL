@@ -112,7 +112,7 @@ do
     esac
 done
 
-if [ $rm1 = "false" ] || [ $rm2 = "false" ]; then
+if [ "$rm1" = "false" ] || [ "$rm2" = "false" ]; then
     echo "Faltan parametros, -h o --help para ayuda"
     exit 1
 fi
@@ -128,7 +128,7 @@ fi
 
 
 
-if [ ! -f $rm1 ] || [ ! -f $rm2 ]; then
+if [ ! -f "$rm1" ] || [ ! -f "$rm2" ]; then
     echo "Los archivos no existen"
     exit 1
 fi
@@ -208,7 +208,7 @@ declare -a matriz1
 while IFS="$s" read -r line
 do
     matriz1+=("${line[@]}")
-done < $rm1
+done < "$rm1"
 
 echo -e "Matriz 1\n"
 
@@ -217,12 +217,12 @@ declare -a matriz2
 while IFS="$s" read -r line
 do
     matriz2+=("${line[@]}")
-done < $rm2
+done < "$rm2"
 
 #Despues de leer las 2 matrices chequeo que las pueda multiplicar
 
-cantFilasM1=$(awk -F"$s" 'END{print NR}' $rm1)
-cantFilasM2=$(awk -F"$s" 'END{print NR}' $rm2)
+cantFilasM1=$(awk -F"$s" 'END{print NR}' "$rm1")
+cantFilasM2=$(awk -F"$s" 'END{print NR}' "$rm2")
 cantColM1=$(echo "${matriz1[0]}" | awk -F';' '{print NF}')
 cantColM2=$(echo "${matriz2[0]}" | awk -F';' '{print NF}')
 

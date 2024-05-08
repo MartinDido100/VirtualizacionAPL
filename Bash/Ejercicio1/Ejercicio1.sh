@@ -244,7 +244,13 @@ for archivo in "$rutaArchivos"/*; do
             echo "Error en el archivo $archivo, se uso otro separador al deseado"
             continue
         fi
+
+
         while IFS=';' read -r dni notas; do
+            if [[ $dni =~ [^0-9] ]]; then
+                echo "El archivo $archivo no es valido, no tiene dni"
+                continue
+            fi
             sumaTotal=0
             pesoNota=$(awk "BEGIN { printf \"%.2f\", 10 / $cantNotas }")
 

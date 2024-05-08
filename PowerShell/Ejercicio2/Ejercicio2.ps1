@@ -121,7 +121,7 @@ function Import-CsvMatrix {
         }
         $row = $row | ForEach-Object {
             if (-not ($_ -match "^(-)?[0-9]+([\.,])?([0-9]+)?$")) {
-                throw "El archivo contiene caracteres no permitidos, los valores deben ser numéricos. $_"
+                throw "El archivo contiene caracteres no permitidos, los valores deben ser numéricos. $_, o es separador ingresado es incorrecto"
             }
             [float]$_ 
         }

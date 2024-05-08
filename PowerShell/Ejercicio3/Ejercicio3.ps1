@@ -201,8 +201,6 @@ function Procesar-Palabras {
 Write-Host "$directorio\*.$extension"
 $archivos = Get-ChildItem "$directorio\*$extension" -File
 
-Write-Host $archivos
-
 if ($archivos.Count -gt 0) {
     $archivos | Get-Content -Encoding UTF8 | Procesar-Palabras -letrasOmitir "$omitir"
 } else {
