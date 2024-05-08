@@ -140,7 +140,7 @@ do
             shift 2
         ;;
         -h | --help)
-            ayuda
+            mostrar_ayuda
             exit 0
         ;;
         -o | --omitir)

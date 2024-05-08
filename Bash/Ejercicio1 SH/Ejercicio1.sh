@@ -25,12 +25,12 @@ echo "  (+) Grupo: Numero 1."
 echo "  (+) Resuelto en: Bash."
 
 echo -e "\n---------------------------------------------------- Consigna -----------------------------------------------------\n"
-echo "  Se necesita implementar un script que dado un archivo CSV con las notas de diferntes alumnos en diferentes materias,"
+echo "  Se necesita implementar un script que dado un archivo CSV con las notas finales de diferentes alumnos en diferentes materias,"
 echo "  realizar un resumen de las notas de cada alumno para luego poder publicarlo en un sitio web"
 echo "  Una vez obtenida la información, se generará un archivo JSON con la información obtenida"
 
 echo -e "\n------------------------------------------------ Que hace el Script -----------------------------------------------\n"
-echo "  procesara un archivo CSV pasado por parametro, y generara un archivo JSON resuemiendo las notas de cada alumno"
+echo "  procesara un archivo CSV pasado por parametro, y generara un archivo JSON resumiendo las notas de cada alumno"
 
 echo -e "\n------------------------------------------------ Breve Descripcion  -----------------------------------------------\n"
 echo "  El programa recibe por parametro el directorio donde se encuentra el archivo CSV y la pantalla o la"
@@ -57,23 +57,23 @@ echo "          $./Ejercicio1.sh -d directorio -s salida"
 echo -e "para mostrar por pantalla"
 echo "          $./Ejercicio1.sh -d directorio -p pantalla"
 echo " salida esperada en ambos casos (tanto como por pantalla o en archivo json)"
-echo -e"{\n 
-"notas": [\n
- {\n
- "dni": "12345678",\n
- "notas": [\n
- { "materia": 1115, "nota": 8 },\n
- { "materia": 1116, "nota": 2 }\n
- ]\n
- },\n
- {\n
- "dni": "87654321",\n
- "notas": [\n
- { "materia": 1116, "nota": 9 },\n
- { "materia": 1118, "nota": 7 }\n
- ]\n
- }\n
-] }"
+echo "{" 
+echo "notas: ["
+echo "      {"
+echo "      dni: "12345678","
+echo "      notas: ["
+echo "        { "materia": 1115, "nota": 8 },"
+echo "        { "materia": 1116, "nota": 2 }"
+echo "       ]"
+echo "      },"
+echo "      {"
+echo "      dni: "87654321","
+echo "      notas: ["
+echo "        { "materia": 1116, "nota": 9 },"
+echo "        { "materia": 1118, "nota": 7 }"
+echo "       ]"
+echo "      }"
+echo "    ] }"
 
 echo -e "\n-------------------------------------------------- Aclaraciones ---------------------------------------------------\n"
 echo "  el script solo recibe 2 parametros, siendo estos directorio y pantalla o directorio y salida"
@@ -189,7 +189,7 @@ do
             shift 2
         ;;
         -h | --help)
-            ayuda
+            mostrar_ayuda
             exit 0
         ;;
         --)

@@ -26,7 +26,7 @@ Informacion General:
 (+) Grupo: Numero 1.
 (+) Resuelto en: PowerShell.
 .SYNOPSIS
-Se necesita implementar un script que dado un archivo CSV con las notas de diferntes alumnos en diferentes materias,"
+Se necesita implementar un script que dado un archivo CSV con las notas finales de diferentes alumnos en diferentes materias,"
 realizar un resumen de las notas de cada alumno para luego poder publicarlo en un sitio web"
 Una vez obtenida la información, se generará un archivo JSON con la información obtenida"
 .DESCRIPTION

@@ -31,10 +31,6 @@ Permite leer dos matrices de enteros desde un archivo, las multiplica e informa:
             El orden de la matriz nos indica la cantidad de filas y columnas, por ejemplo: 3x5 (3 filas y 5 columnas).
     - Si es cuadrada.
             Una matriz es cuadrada cuando la cantidad de filas y columnas son iguales.
-    - Si es identidad.
-            Una matriz es identidad cuando su diagonal principal esta compuesta por unos y el resto de las celdas por ceros.
-    - Si es nula.
-            Una matriz es nula si tiene todas las celdas en cero.
     - Si es fila.
             Una matriz es fila si tiene una sola fila.
     - Si es columna. 
