@@ -121,8 +121,8 @@ if [ $s = "false" ]; then
  s=","
 fi
 
-if [ $s = '-' ] || [ $s =~ [^0-9] ]; then
-    echo El separador no puede ser '-' o contener números."
+if [[ "$s" =~ ^[-0-9]+$ ]]; then
+    echo "El separador no puede ser '-' o contener números."
     exit 1
 fi
 
