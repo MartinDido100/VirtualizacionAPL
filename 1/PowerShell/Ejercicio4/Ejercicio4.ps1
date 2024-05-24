@@ -45,6 +45,9 @@ Aclaraciones:
 -salida: Ruta del directorio en donde se van a crear los backups.
 .PARAMETER patron
 -patron: Patron que debe contener el archivo para que se realice el backup.
+.PARAMETER kill
+-kill: Flag que se utiliza para indicar que el script debe detener el demonio previamente iniciado.
+Este parámetro solo se puede usar junto con -d/--directorio/-directorio.
 .INPUTS
 -Solo se va a monitoriar  el directorio indicado y sus subdirectorios.
 -Las rutas pueden ser relativas o absolutas y es recomendable indicarlas entre comillas simples por si los nombres contienen espacios.
