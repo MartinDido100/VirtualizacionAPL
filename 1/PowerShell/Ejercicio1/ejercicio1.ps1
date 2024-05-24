@@ -44,7 +44,7 @@ JSON con la informacion obtenida y en el directorio indicado por parametro.
 -pantalla: Muestra la salida por pantalla, no genera el archivo JSON. Este parámetro no se puede 
 echo usar a la vez que salida
 
-.ACLARACIONES
+.NOTES
 el script solo recibe 2 parametros, siendo estos directorio y pantalla o directorio y salida
 en el caso de que se pasen los parametros pantalla y salida, el script no funcionara y mostrara el error
 

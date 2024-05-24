@@ -28,8 +28,8 @@ Informacion General:
 Realiza el monitoreo en segundo plano de los archivos de un directorio.
 .DESCRIPTION
 Cada vez que se detecte un cambio, ya sea creacion o modificacion de un archivo (no se monitorea borrado), 
-el script realiza un backup del directorio monitoreado y crea un registro en un archivo de log 
-con la fecha, hora, ruta del directorio monitoreado y un detalle de los resultados encontrados.
+el script realiza un backup del directorio monitoreado y crea un registro en un archivo de log con la fecha, hora, ruta del directorio monitoreado y un detalle de los resultados encontrados.
+Siempre y cuando el contenido del archivo contenga el patron pasado por parametro
 
 Aclaraciones:
 -Este script analiza el directorio pasado por parametro y sus subdirectorios.
@@ -43,6 +43,8 @@ Aclaraciones:
 -directorio: Ruta del directorio a monitorear. Es obligatorio.
 .PARAMETER salida
 -salida: Ruta del directorio en donde se van a crear los backups.
+.PARAMETER patron
+-patron: Patron que debe contener el archivo para que se realice el backup.
 .INPUTS
 -Solo se va a monitoriar  el directorio indicado y sus subdirectorios.
 -Las rutas pueden ser relativas o absolutas y es recomendable indicarlas entre comillas simples por si los nombres contienen espacios.
@@ -53,9 +55,13 @@ ACLARACION:
     Para llamar a la funcion de ayuda:
         >get-help ./Ejercicio4.ps1 -Full
 .EXAMPLE
-Si se indica el directorio y la salida
-    >./Ejercicio4.ps1 -directorio './Directorio/' -salida './Backup'
+    Si se indica el directorio y la salida
+    >./Ejercicio4.ps1 -directorio './Directorio/' -patron "patron a buscar" -salida './Backup'
+.EXAMPLE
+    Si se quiere finalizar el proceso demonio
+    >../Ejercicio4.ps1 -directorio './Directorio/' -kill
 #>
+
 
 param (
     [Parameter(Mandatory=$true)]
@@ -77,12 +83,6 @@ param (
     [string]$salida,
 
     [Parameter(Mandatory=$false)]
-    [ValidateScript({
-        if (-not ($_ -eq "create" -or $_ -eq "modify")) {
-            throw "Solo se permiten los valores 'create' o 'modify' para el patron"
-        }
-        $true
-    })]
     [string]$patron,
 
     [Parameter(Mandatory=$false)]
@@ -126,12 +126,6 @@ try{
 
 $salida=Resolve-Path $salida
 
-$evento = "Changed"
-
-if($patron -eq "create"){
-    $evento="Created"
-}
-
 $ruta = ".\monitoreo.log"
 if (-not (Test-Path -Path $ruta)) {
     #Mando la salida a un null para que no se muestre en pantalla 
@@ -139,7 +133,7 @@ if (-not (Test-Path -Path $ruta)) {
 }
 
 $proceso={
-    param($directorio, $pathsalida,$ruta,$evento)
+    param($directorio,$pathsalida,$ruta,$evento,$patron)
 
     $watcher = New-Object System.IO.FileSystemWatcher
     $watcher.Path = $directorio
@@ -152,20 +146,23 @@ $proceso={
 
         $formato=$Timestamp.ToString("yyyyMMdd-HHmmss")
 
-        $formato = $Timestamp.ToString("yyyyMMdd-HHmmss")
+        $contienePatron = Select-String -Path "$FullPath" -Pattern "$patron"
 
-        try {
-            Compress-Archive -Path "$directorio" -DestinationPath "$pathsalida\$formato.zip"
-        } catch {
-            Write-Host "Error durante la compresion: $_" >> $ruta
+        if ($contienePatron) {
+            try {
+                Compress-Archive -Path $path -DestinationPath "$pathsalida\$formato.zip"
+            } catch {
+                Write-Host "Error durante la compresión: $_" >> $ruta
+            }
+    
+            $text = "{0} was {1} at {2}" -f $FullPath, $ChangeType, $Timestamp
+            $text >> $ruta
         }
-
-        $text = "{0} was {1} at {2}" -f $FullPath, $ChangeType, $Timestamp
-        $text >> $ruta
     }
 
     $handlers = . {
-        Register-ObjectEvent -InputObject $watcher -EventName $evento  -Action $action
+        Register-ObjectEvent -InputObject $watcher -EventName Changed -Action $action 
+        Register-ObjectEvent -InputObject $watcher -EventName Created -Action $action
     }
 
     $watcher.EnableRaisingEvents = $true
@@ -176,6 +173,6 @@ $proceso={
 
 }
 
-$job = start-Job -Name "daemon$directorio" -ScriptBlock $proceso -ArgumentList $directorio, $salida, $ruta,$evento
+$job = start-Job -Name "daemon$directorio" -ScriptBlock $proceso -ArgumentList $directorio, $salida, $ruta,$evento,$patron
 
-Write-Host "Ha comenzado el monitoreo en segundo plano, para detenerlo debe ejecutar el script con el comando -kill"
+Write-Host "Ha comenzado el monitoreo en segundo plano en los archivos del directorio $directorio, se hara log de los archivos con el patron $patron, para detenerlo debe ejecutar el script con el comando -kill"

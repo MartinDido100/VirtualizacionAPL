@@ -210,8 +210,6 @@ do
     matriz1+=("${line[@]}")
 done < "$rm1"
 
-echo -e "Matriz 1\n"
-
 declare -a matriz2
 
 while IFS="$s" read -r line
@@ -223,8 +221,8 @@ done < "$rm2"
 
 cantFilasM1=$(awk -F"$s" 'END{print NR}' "$rm1")
 cantFilasM2=$(awk -F"$s" 'END{print NR}' "$rm2")
-cantColM1=$(echo "${matriz1[0]}" | awk -F';' '{print NF}')
-cantColM2=$(echo "${matriz2[0]}" | awk -F';' '{print NF}')
+cantColM1=$(echo "${matriz1[0]}" | awk -F $s '{print NF}')
+cantColM2=$(echo "${matriz2[0]}" | awk -F $s '{print NF}')
 
 if [ $cantColM1 != $cantFilasM2 ]; then
     echo "No se pueden multiplicar las matrices"
@@ -237,8 +235,8 @@ for ((i=1; i<=$cantFilasM1; i++)); do
     for ((j=1; j<=$cantColM2; j++)); do
         suma=0
         for ((k=1; k<=$cantColM1; k++)); do
-            campom1=$(echo "${matriz1[$((i - 1))]}" | awk -F';' '{print $'$k'}' | tr -d '\r')
-            campom2=$(echo "${matriz2[$((k - 1))]}" | awk -F';' '{print $'$j'}' | tr -d '\r')
+            campom1=$(echo "${matriz1[$((i - 1))]}" | awk -F $s '{print $'$k'}' | tr -d '\r')
+            campom2=$(echo "${matriz2[$((k - 1))]}" | awk -F $s '{print $'$j'}' | tr -d '\r')
 
             suma=$(($suma + $campom1*$campom2))
         done

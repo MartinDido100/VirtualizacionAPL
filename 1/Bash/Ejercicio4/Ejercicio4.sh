@@ -50,13 +50,13 @@ echo "  No se debe poder ejecutar más de 1 proceso demonio para un determinado 
 echo "  Nota: El monitoreo del directorio se debe hacer utilizando inotify-tools en bash y FileSystemWatcher en Powershell."
 
 echo -e "\n------------------------------------------------ Que hace el Script -----------------------------------------------\n"
-echo "  Monitorea un directorio. Ante cada creacion o modificacion de algun archivo, realiza un backup del directorio y "
-echo "  crea un registro en un archivo log, informando el/los cambios detectado." 
+echo "  Monitorea un directorio. Ante cada creacion o modificacion de algun archivo en el que se encuentre el patron especificado por parametro, realiza un backup del directorio y "
+echo "  crea un registro en un archivo log, informando el/los cambios detectados." 
 
 echo -e "\n------------------------------------------------ Breve Descripcion  -----------------------------------------------\n"
 echo "  El siguiente script recibe por parametro un directorio."
 echo "  La funcion del script es comenzar la ejecucion del monitoreo del directorio en segundo plano."
-echo "  Ante cada creacion o modificacion de un archivo dentro del directorio:"
+echo "  Ante cada creacion o modificacion de un archivo dentro del directorio en el que se encuentre el patron especificado por parametro:"
 echo "      -Genera el backup del contenido del directorio (un archivo con extension ".tar.gz")."
 echo "      -Genera un nuevo registro en el archivo .log, detallando el evento detectado."
 echo "  Los archivos de backups se guardaran en el directorio especificado con el parametro -s."
@@ -67,7 +67,6 @@ echo " -h / --help: Descripcion de los parametros que se le deben pasar al progr
 echo " -d / --directorio: Ruta del directorio a monitorear."
 echo " -s / --salida: Ruta del directorio en donde se van a crear los backups."
 echo " -p / --patron: Patrón a buscar una vez detectado un cambio en los archivos monitoreados."
-echo "el patron puede ser o modify o create"
 echo " -k / -kill Flag que se utiliza para indicar que el script debe detener el demonio previamente iniciado."
 echo " Este parámetro solo se puede usar junto con -d/-- directorio/-directorio."
 
@@ -106,7 +105,7 @@ echo "          2) Ejecutar el script, pasandole el path del directorio que se q
 echo "          3) Pasar el directorio donde se guardaran los archivos de backup, con el parametro -s o --salida."
 echo "          4) Una vez ejecutado el script, se muestra por panatalla el PID del proceso de monitoreo para facilitar la detencion."
 echo "             En caso de querer detener el monitoreo puede utilizar el siguiente comando:"
-echo '$./Ejercicio4.sh -d/--directorio [Path del directorio a monitorear] -s/--salida [Path del directorio de backups] -p/--patron [modify o create]'
+echo '$./Ejercicio4.sh -d/--directorio [Path del directorio a monitorear] -s/--salida [Path del directorio de backups] -p/--patron [patron a buscar]'
 echo '$./Ejercicio4.sh -d ./Directorio -k/--kill'
 
 echo -e "\n---------------------------------------------- Ejemplos de llamadas -----------------------------------------------\n"
@@ -114,7 +113,7 @@ echo "  ACLARACION: Se utilizaran los nombres y valores de los archivos entregad
 echo -e "\n  Para llamar a la funcion de ayuda:"
 echo '          $./Ejercicio4.sh -h o tambien se puede usar $./Ejercicio4.sh --help'
 echo -e "\n  Para monitorear un directorio:"
-echo '$./Ejercicio4.sh -d/--directorio [Path del directorio a monitorear] -s/--salida [Path del directorio de backups] -p/--patron [modify o create]'
+echo '$./Ejercicio4.sh -d/--directorio [Path del directorio a monitorear] -s/--salida [Path del directorio de backups] -p/--patron [patron a buscar]'
 echo '$./Ejercicio4.sh -d ./Directorio -k/--kill'
 
 echo -e "\n-------------------------------------------------- Aclaraciones ---------------------------------------------------\n"
@@ -132,12 +131,19 @@ echo -e "\n---------------------------------------------------------------------
 
 # Funcion para empezar a monitoriar el directorio
 monitorear_directorio() {
-    inotifywait -m -q -r -e "$patron" --format "%e %w %f" "$directorio" |
+    inotifywait -m -q -r -e "create,modify" --format "%e %w %f" "$directorio" |
     while read -r evento ruta archivo; do
         # Agrego el evento detectado en el .log
         archivo_log="./monitoreo.log"
-        echo "$(date +"%Y-%m-%d %H:%M:%S") - Cambio detectado en "${ruta%/*}". Evento: "$evento" en Archivo: "$archivo"" >> "$archivo_log"
-        realizar_backup
+        contenido=$(cat "$ruta/$archivo")
+
+        if [[ $contenido =~ $patron ]]; then
+            echo "$(date +"%Y-%m-%d %H:%M:%S") - Cambio detectado en ${ruta%/*}. Evento: $evento en Archivo: $archivo. El patrón fue encontrado en el contenido." >> "$archivo_log"
+            realizar_backup
+        fi
+
+        # echo "$(date +"%Y-%m-%d %H:%M:%S") - Cambio detectado en "${ruta%/*}". Evento: "$evento" en Archivo: "$archivo"" >> "$archivo_log"
+        # realizar_backup
     done
 }
 
@@ -204,12 +210,6 @@ do
                 ;;
                 -p | --patron)
                         patron="$2"
-
-                        if [ "$patron" != "create" ] && [ "$patron" != "modify" ]; then
-                            echo "El patron ingresado no es valido. Los patrones validos son: CREATE, MODIFY"
-                            exit 1
-                        fi
-
                         parametrosIngresados=true
                         shift 2
                 ;;
@@ -284,4 +284,5 @@ pidDemonio=$(pgrep -n inotifywait)
 echo -e "\n  (!) El PID del proceso demonio que monitorea recien creado es: $pidDemonio."
 echo "          Puede detenerlo utilizando: el parametro -k/--kill"
 echo -e "\n  (!) Ha comenzado el monitoreo del directorio "$directorio" en segundo plano."
+echo - "\n SOLAMENTE SE MONITOREARAN LOS CAMBIOS DETECTADOS EN LOS ARCHIVOS QUE CONTENGAN EL PATRON: $patron"
 exit 0

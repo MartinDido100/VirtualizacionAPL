@@ -43,6 +43,12 @@ echo " -p / --pantalla: Muestra la salida por pantalla, no genera el archivo JSO
 echo "usar a la vez que -s."
 
 
+echo -e "\n---------------------------------------------- Formato de archivos de entrada ----------------------------------------------\n"
+echo " Los archivos de entrada deben ser .csv y tener el siguiente formato esctrictamente: "
+echo "NroDni;Nota1;Nota2;...;NotaN" 
+echo " Ejemplo de archivo valido: 1234567;b;b;b;m;"
+echo " Se debe respetar tanto el separador como el orden, tambien el archivo debe finalizar con un enter al final "
+
 echo -e "\n-------------------------------------------------- Forma de Uso ---------------------------------------------------\n"
 echo "          1) Ejecutar el script, pasandole al menos uno de los parametros, salida o pantalla."
 echo "          a) para imprimir por pantalla debera pasarse como parametro el directorio (-d) y la pantalla (-p)"
@@ -160,6 +166,7 @@ salida="false"
 directorios="false"
 rutaArchivos=""
 
+
 eval set -- "$options"
 while true
 do
@@ -175,17 +182,17 @@ do
         -d | --directorio)
             directorios="true"
 
-            if [ $2 = '-p' ] || [ $2 = '--pantalla' ] || [ $2 = '-s' ] || [ $2 = '--salida' ]; then
+            if [ "$2" = '-p' ] || [ "$2" = '--pantalla' ] || [ "$2" = '-s' ] || [ "$2" = '--salida' ]; then
                 echo "Falta el parametro de directorio"
                 exit 1
             fi
 
-            if [ $2 = '-h' ] || [ $2 = '--help' ]; then
+            if [ "$2" = '-h' ] || [ "$2" = '--help' ]; then
                 ayuda
                 exit 0
             fi
 
-            rutaArchivos=$2
+            rutaArchivos=$(realpath "$2")
             shift 2
         ;;
         -h | --help)
@@ -219,31 +226,26 @@ if [ "$pantalla" = "true" ] && [ "$salida" = "true" ]; then
 fi
 
 #Verifico si la ruta es valida
-if [ ! -d $rutaArchivos ]; then
+if [ ! -d "$rutaArchivos" ]; then
     echo "La ruta de los archivos no es valida"
     exit 1
 fi
-
-# Puede llegar a usarse Grep para buscar por dni en cada archivo leido
-# Con el  pipe > para escribir en archivo JSON
-
-
-
 
 declare -A alumnos
 
 for archivo in "$rutaArchivos"/*; do
     codigo_mesa=$(basename "$archivo" ".csv")
     if [[ $codigo_mesa =~ [^0-9] ]]; then
-        echo "El archivo $archivo no tiene un nombre valido"
+        echo "El archivo "$archivo" no tiene un nombre valido"
         continue
     fi
+
     if [ -f "$archivo" ]; then
-        cantNotas=$(awk -F';' '{print NF-1; exit 1}' $archivo)
+        cantNotas=$(awk -F';' '{print NF-1; exit 1}' "$archivo")
         if((cantNotas == 0)); then
             echo "Error en el archivo $archivo, se uso otro separador al deseado"
             continue
-        fi
+    fi
 
 
         while IFS=';' read -r dni notas; do
@@ -271,7 +273,7 @@ for archivo in "$rutaArchivos"/*; do
 
             alumnos["$dni"]+=$codigo_mesa,$notaFinal,
 
-        done < <(awk -F';' 'NR {print $0}' $archivo) # Leo a partir de la segunda linea del archivo, y con el <(..) hago que se trate como un archivo y no como un string
+        done < <(awk -F';' 'NR {print $0}' "$archivo") # Leo a partir de la segunda linea del archivo, y con el <(..) hago que se trate como un archivo y no como un string
     fi
 done
 

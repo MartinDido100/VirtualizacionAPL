@@ -59,7 +59,8 @@ echo "  -x / --extension: Si esta presente, indica las extensiones de los archiv
 echo "  -s / --separador Un carácter separador de palabras. Opcional. Valor por defecto: “ “ (espacio). Ignora si es" 
 echo "  mayúscula o minúscula."
 echo " -o / --omitir Array de caracteres a buscar en las palabras del archivo. Si ese carácter se encuentra en la" 
-echo "  palabra, esta no debe ser contabilizada. (Obligatorio)"
+echo "  palabra, esta no debe ser contabilizada. (Obligatorio), se debe pasar con el siguiente formato: -o [a,b,c]. 
+        En caso de que se pase se use una ',' como separador, el programa no funcionara. Ejemplo -o [a,b,,] y teniendo -s ','"
 :
 echo -e "\n-------------------------------------------------- Forma de Uso ---------------------------------------------------\n"
 echo "  Pasos:"
@@ -79,7 +80,7 @@ echo '          $./Ejercicio3.sh -d [Path del directorio] -s [separador] -o [arr
 echo -e "\n  Si se desean analizar todos los archivos dentro del directorio sin extension ni separador especifico:"
 echo '          $./Ejercicio3.sh -d [Path del directorio] -o [arrayAomitir]'
 echo -e "\n  Si se quieren analizar los archivos con extension "
-echo '          $./Ejercicio3.sh -d [Path del directorio] -x [extension] -s [separador] -o [omitir] '
+echo '          $./Ejercicio3.sh -d [Path del directorio] -x [extension] -s [separador] -o [omitir1,omitir2,omitir3] '
 echo -e "\n  Resultado esperado de analizar todos los archivos: "
 echo " contenido archivo 1: [ho,la ,como, eees,tas]"
 echo "contenido archivo 2: [aprueee,ben,nos&,vor,como]"
@@ -184,12 +185,31 @@ fi
 
 cantArchivos=$(ls "$directorio"/*.$extension | wc -l)
 
-letrasOmitir=$(awk -v omitir="$omitir" 'BEGIN{gsub(/[\[\],]/,"",omitir); print omitir}')
+# letrasOmitir=$(awk -v omitir="$omitir" 'BEGIN{gsub(/[\[\],]/,"",omitir); print omitir}')
 
-if [ $letrasOmitir = " " ]; then
+letrasOmitir=$(awk -v omitir="$omitir" 'BEGIN {
+    gsub(/[][]/, "", omitir);
+    split(omitir, letras, ",");
+    for (i = 1; i <= length(letras); i++) {
+        if (letras[i] != "") {
+            print letras[i];
+        } else {
+            print ",";
+        }
+    }
+}')
+
+if [ "$letrasOmitir" = "" ]; then
     echo "No se ingresaron letras a omitir"
     exit 1
 fi
+
+for letra in $letrasOmitir; do
+    if [ "$letra" = "$separador" ]; then
+        echo "El separador de la lista de parametros no puede estar como letra a omitir"
+        exit 1
+    fi
+done
 
 cat "$directorio"/*.$extension | awk -v cArch="$cantArchivos" -v letrasOmitir="$letrasOmitir" -F"$separador" '
 
