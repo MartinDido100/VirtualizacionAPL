@@ -3,7 +3,9 @@
 #include <string.h>
 #include <pthread.h>
 #include <dirent.h>
-#include <linux/limits.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/syscall.h>
 
 typedef struct{
     int* vec;
@@ -41,7 +43,7 @@ int main(int argc,char* argv[]){
         printf("Error, el directorio a leer no existe");
         return 1;
     }
-
+    
     procesarDirectorio(dir,input,cantHilos);
     closedir(dir);
 
@@ -92,29 +94,44 @@ void* procesarArchivos(void* args){
     DIR* dir = datos->dir;
     char* input = datos->input;
 
+    pid_t tid = syscall(SYS_gettid);
+    
     struct dirent* dirent;
-    int i = 0;
+   
+    int posicionVector = 0;
 
     dirent = readdir(dir);
 
+
     while(dirent != NULL){
+        
         if(strcmp(dirent->d_name, ".") != 0 && strcmp(dirent->d_name, "..") != 0 && strstr(dirent->d_name,".txt") != NULL){
             FILE* arch;
             int apariciones[10] = {0};
+            int i = 0;
 
-            //Pedir mutex
+            //Pedir mutex 
 
             pthread_mutex_lock(&mutexVector);
 
-            for(i = 0;i < cantArchivosTxt;i++){
-                if(*(vec + i) != 0){
+            while(i==0){
+                if(*(vec + posicionVector) != 0){
                     dirent = readdir(dir);
+                    posicionVector++;
+                }
+                else{
+                    i=1;
                 }
             }
 
-            *(vec + i) = 1;
+            *(vec + posicionVector) = 1;
+       
 
-            //Liberarr mutex
+            for(int j = 0; j<cantArchivosTxt; j++){
+                printf("%d ", *(vec + j));
+            }
+
+            //Liberar mutex
 
             pthread_mutex_unlock(&mutexVector);
 
@@ -150,9 +167,12 @@ void* procesarArchivos(void* args){
             pthread_mutex_unlock(&mutexApariciones);
             printf("\n");
         }
-
-        dirent = readdir(dir);
-
+        else{
+            dirent = readdir(dir);
+        }
+        if(posicionVector == (cantArchivosTxt - 1)){
+            dirent = readdir(dir);
+        }
     }
 
     return NULL; //Return 0 finaliza el hilo
@@ -173,6 +193,9 @@ void crearHilo(DIR* dir,char* input,int* vec){
     if(pthread_create(&hilo,NULL,procesarArchivos,&args) != 0){
        printf("Error al crear el hilo");
        exit(0); 
+    }
+    else{
+        printf("Hilo creado ");
     }
 
     pthread_join(hilo, NULL);
