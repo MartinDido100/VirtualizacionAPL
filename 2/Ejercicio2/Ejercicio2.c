@@ -20,10 +20,10 @@ int aparicionesTotales[10] = {0};
 
 int revisarParametros(int argc,char* argv[],int* cantHilos,char** input,char** output);
 void procesarDirectorio(DIR* dir,char* input,int cantHilos);
-void crearHilo(DIR* dir,char* input,int* vec);
 void* procesarArchivos(void* args);
 
 int main(int argc,char* argv[]){
+
     int cantHilos = 0;
     char* input = NULL;
     char* output = NULL;
@@ -39,7 +39,7 @@ int main(int argc,char* argv[]){
     }
     
     DIR* dir = opendir(input);
-    if(!dir){
+    if(dir == NULL){
         printf("Error, el directorio a leer no existe");
         return 1;
     }
@@ -54,7 +54,6 @@ int main(int argc,char* argv[]){
 
 int revisarParametros(int argc,char* argv[],int* cantHilos,char** input,char** output){
     int i;
-
     for(int i = 1; i < argc; i++){
         if(strcmp(argv[i],"-h") == 0 || strcmp(argv[i],"--help") == 0){
             printf("Ayudita");
@@ -96,16 +95,11 @@ void* procesarArchivos(void* args){
 
     pid_t tid = syscall(SYS_gettid);
     
-    struct dirent* dirent;
-   
     int posicionVector = 0;
+    struct dirent* dirent;
 
-    dirent = readdir(dir);
-
-
-    while(dirent != NULL){
-        
-        if(strcmp(dirent->d_name, ".") != 0 && strcmp(dirent->d_name, "..") != 0 && strstr(dirent->d_name,".txt") != NULL){
+    while((dirent = readdir(dir)) != NULL && posicionVector < cantArchivosTxt){
+        if(strcmp(dirent->d_name, ".") != 0 && strcmp(dirent->d_name, "..") != 0){
             FILE* arch;
             int apariciones[10] = {0};
             int i = 0;
@@ -114,22 +108,26 @@ void* procesarArchivos(void* args){
 
             pthread_mutex_lock(&mutexVector);
 
-            while(i==0){
-                if(*(vec + posicionVector) != 0){
-                    dirent = readdir(dir);
-                    posicionVector++;
-                }
-                else{
-                    i=1;
-                }
+            // while(i==0){
+            //     if(*(vec + posicionVector) != 0){
+            //         dirent = readdir(dir);
+            //         if(strcmp(dirent->d_name, ".") != 0 && strcmp(dirent->d_name, "..") != 0){
+            //             posicionVector++;
+            //         }else{
+            //             dirent = readdir(dir);
+            //         }
+            //     }
+            //     else{
+            //         i=1;
+            //     }
+            // }
+
+            while (posicionVector < cantArchivosTxt && vec[posicionVector] != 0) {
+                posicionVector++;
             }
+            printf("%d  %d\n", posicionVector,tid);
 
             *(vec + posicionVector) = 1;
-       
-
-            for(int j = 0; j<cantArchivosTxt; j++){
-                printf("%d ", *(vec + j));
-            }
 
             //Liberar mutex
 
@@ -155,50 +153,21 @@ void* procesarArchivos(void* args){
 
             fclose(arch);
 
-            pthread_mutex_unlock(&mutexApariciones);
+            pthread_mutex_lock(&mutexApariciones);
 
-            printf("Archivo leido %s. Apariciones ",dirent->d_name);
+            printf("%d leyo %s. Apariciones ",tid,dirent->d_name);
 
             for(int j = 0;j < 10;j++){
                 aparicionesTotales[j]+=apariciones[j];
                 printf("%d=%d, ",j,apariciones[j]);
             }
 
-            pthread_mutex_unlock(&mutexApariciones);
             printf("\n");
-        }
-        else{
-            dirent = readdir(dir);
-        }
-        if(posicionVector == (cantArchivosTxt - 1)){
-            dirent = readdir(dir);
+            pthread_mutex_unlock(&mutexApariciones);
         }
     }
 
     return NULL; //Return 0 finaliza el hilo
-}
-
-void crearHilo(DIR* dir,char* input,int* vec){
-
-    pthread_t hilo;
-
-    struct dirent* dt;
-
-    argsRutina args = {
-        vec,
-        dir,
-        input
-    };
-
-    if(pthread_create(&hilo,NULL,procesarArchivos,&args) != 0){
-       printf("Error al crear el hilo");
-       exit(0); 
-    }
-    else{
-        printf("Hilo creado ");
-    }
-
-    pthread_join(hilo, NULL);
 }
 
 void procesarDirectorio(DIR* dir,char* input,int cantHilos){
@@ -218,9 +187,27 @@ void procesarDirectorio(DIR* dir,char* input,int cantHilos){
     //Creo el vector con la cantidad de txts y los dejo en 0 para saber que ninguno esta leido
     int* vec = malloc(cantArchivosTxt*sizeof(int));
 
+    pthread_t hilos[cantHilos];
+
     for(int i = 0;i < cantHilos;i++){
         rewinddir(dir);
-        crearHilo(dir,input,vec);
+
+        argsRutina args = {
+            vec,
+            dir,
+            input
+        };
+
+        if(pthread_create(&hilos[i],NULL,procesarArchivos,&args) != 0){
+           printf("Error al crear el hilo");
+           exit(0); 
+        }
     }
+
+    for(int j = 0;j < cantHilos;j++){
+        pthread_join(hilos[j],NULL);
+    }
+
+    free(vec);
 
 }
