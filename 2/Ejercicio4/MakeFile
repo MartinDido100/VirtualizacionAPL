@@ -1,0 +1,15 @@
+#Makefile
+
+CC = gcc
+CFLAGS = -Wall -Wextra
+
+all: cliente servidor
+
+cliente: cliente.c
+	$(CC) $(CFLAGS) -o cliente cliente.c
+
+servidor: servidor.c
+	$(CC) $(CFLAGS) -o servidor servidor.c
+
+clean:
+	rm -f cliente servidor
