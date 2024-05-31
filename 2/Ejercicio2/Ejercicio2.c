@@ -5,6 +5,7 @@
 #include <dirent.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <errno.h>
 #include <sys/syscall.h>
 
 typedef struct{
@@ -34,11 +35,9 @@ int main(int argc,char* argv[]){
         return 1;
     }
 
-    input = realpath(input,NULL);
-    
     DIR* dir = opendir(input);
-    if(dir == NULL){
-        printf("Error, el directorio a leer no existe");
+    if (dir == NULL) {
+        printf("Error no existe el archivo\n");
         return 1;
     }
 
