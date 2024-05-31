@@ -56,6 +56,7 @@ void daemon_process(const char *log_file_path
             timestamp[strlen(timestamp) - 1] = '\0'; // Quitar el salto de línea
             fprintf(log_file, "%s %s", timestamp, buffer);
             fflush(log_file);
+            memset(buffer, 0, sizeof(buffer)); // Limpiar el buffer después de procesar
         }
         // sem_post(sem); // Libera el semáforo después de leer del FIFO
     }
