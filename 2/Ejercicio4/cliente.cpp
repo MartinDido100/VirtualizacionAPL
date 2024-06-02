@@ -9,8 +9,10 @@
 using namespace std;
 
 void help();
-void mostrar(char * memoria, char estado[4][4]);
+void mostrar(char memoria[4][4]);
 void muerte_ordenada(int sig);
+
+datos_compartidos * memoria;
 
 int main( int argc, char *argv[]){
     
@@ -58,79 +60,58 @@ int main( int argc, char *argv[]){
     
     int idMemoria = shm_open(MEMORIA_COMPARTIDA.c_str(), O_CREAT | O_RDWR, 0600);
     
-    auto memoria = (char *)mmap(NULL,
-                                16,
-                                PROT_READ | PROT_WRITE,
-                                MAP_SHARED,
-                                idMemoria,
-                                0);
+    memoria = (datos_compartidos *)mmap(NULL,
+                            sizeof(datos_compartidos),
+                            PROT_READ | PROT_WRITE,
+                            MAP_SHARED,
+                            idMemoria,
+                            0);
     
-    auto semaforo_juego = sem_open(
-            SEMAFORO_JUEGO.c_str(),
+    auto time_init = time(0);
+
+    auto semaforo_jugada_a = sem_open(
+            SEMAFORO_JUGADA_A.c_str(),
             O_CREAT,
             0600,
             0
     );
 
-    auto time_init = time(0);
-
-    int exitos = 0;
-    int jugadas = 0;
-    int last_p = -1;
-
-    char estado[4][4] = {0};
-
-    while(exitos < 8){
-        int i,j;
-        cout<<"Ingrese las coordenadas de fila y columna (1 - 4) de la celda que desea seleccionar "<<endl;
-        cin>>i>>j;
-        cout<<"\033[2J\033[H";
-        
-        i--, j--;
-        if(i<0 or j<0 or i>=4 or j>=4){
-            cout << "\033[1;31mCoordenadas invalidas\033[0m" << endl;
-            continue;
-        }
-
-        if(estado[i][j] == 1){
-            cout << "\033[1;33mCelda ya revelada\033[0m" << endl;
-            continue;
-        }
-
-        int p = i*4+j;
-        
-        if(jugadas%2==1 and p == last_p){
-            cout << "\033[1;33mYa se selecciono esta celda\033[0m" << endl;
-            continue;
-        }
-        
-        estado[i][j] = -1;
-        jugadas++;
-
-        mostrar(memoria, estado);
+    auto semaforo_jugada_b = sem_open(
+            SEMAFORO_JUGADA_B.c_str(),
+            O_CREAT,
+            0600,
+            0
+    );
     
-        if(jugadas%2==0){
-            if(memoria[p] == memoria[last_p]){
-                cout << "\033[1;32mEncontraste una pareja\033[0m" << endl;
-                estado[i][j] = 1;
-                estado[last_p/4][last_p%4] = 1;
-                exitos++;
-            }else{
-                cout << "\033[1;31mNo encontraste una pareja\033[0m" << endl;
-                estado[i][j] = 0;
-                estado[last_p/4][last_p%4] = 0;
-            }
-        }
+    auto semaforo_no_cliente = sem_open(
+            SEMAFORO_NO_CLIENTE.c_str(),
+            O_CREAT,
+            0600,
+            0
+    );
 
-        last_p = p;
+    while(!memoria->fin){
+        mostrar(memoria->mostrar);
+        int i,j;
+        cout<<"Ingrese las coordenadas de fila y columna (0 - 3) de la celda que desea seleccionar "<<endl;
+        cin>>i>>j;
+        
+        memoria->jugada[0] = char(i);
+        memoria->jugada[1] = char(j);
+
+        sem_post(semaforo_jugada_a);
+        sem_wait(semaforo_jugada_b);
+        cout<<"\033[2J\033[H";
+        printf("\n%s\n", memoria->mensaje);
     }
 
     auto time_final = time(0);
 
-    cout << "\033[1;32mJuego terminado en " << (time_final - time_init) << " segundos y " << jugadas << " jugadas \033[0m" << endl;
+    sem_post(semaforo_no_cliente);
+
+    cout << "\033[1;32mJuego terminado en " << (time_final - time_init) << " segundos y " << memoria->num_jugadas << " jugadas \033[0m" << endl;
     // cout<<"Juego terminado en "<<time_final-time_init<<" segundos y "<<jugadas<<" jugadas "<<endl;
 
-    sem_post(semaforo_juego);
     exit(0);
 }
 
@@ -142,15 +123,15 @@ void help(){
     cout<<" El cliente permite al usuario jugar y le muestra el estado del juego por salida estandar (consola)"<<endl;
 }
 
-void mostrar(char * memoria, char estado[4][4]){
-    cout << "\t1\t2\t3\t4" << endl;
+void mostrar(char memoria[4][4]){
+    cout << "\t0\t1\t2\t3" << endl;
     for(int i = 0; i < 4; i++){
-        cout << i+1 << "\t";
+        cout << i << "\t";
         for(int j = 0; j < 4; j++){
-            if(estado[i][j] == 1){
-                cout << "\033[1;32m" << memoria[i*4+j] << "\033[0m\t";
-            }else if(estado[i][j] == -1){
-                cout << "\033[1;33m" << memoria[i*4+j] << "\033[0m\t";
+            if(memoria[i][j] >= 'A' and memoria[i][j] <= 'Z'){
+                cout << "\033[1;32m" << memoria[i][j] << "\033[0m\t";
+            }else if(memoria[i][j] >= -'Z' and memoria[i][j] <= -'A'){
+                cout << "\033[1;33m" << char(-memoria[i][j]) << "\033[0m\t";
             }else{
                 cout<<"-\t";
             }
@@ -164,22 +145,28 @@ void muerte_ordenada(int sig){
     cerr << "Signal : "<<sig<<endl;
     cout << "\033[1;31mEl cliente se cerrara\033[0m" << endl;
     
-    auto semaforo_juego = sem_open(
-        SEMAFORO_JUEGO.c_str(),
-        O_CREAT,
-        0600,
-        0
+    memoria->fin = true;
+
+    auto semaforo_jugada_a = sem_open(
+            SEMAFORO_JUGADA_A.c_str(),
+            O_CREAT,
+            0600,
+            0
     );
 
-    sem_post(semaforo_juego);
-
-    auto semaforo_cliente = sem_open(
-        SEMAFORO_CLIENTE.c_str(),
-        O_CREAT,
-        0600,
-        1
+    int value;
+    sem_getvalue(semaforo_jugada_a, &value);
+    if(value==0){
+        sem_post(semaforo_jugada_a);
+    }
+    
+    auto semaforo_no_cliente = sem_open(
+            SEMAFORO_NO_CLIENTE.c_str(),
+            O_CREAT,
+            0600,
+            0
     );
 
-    sem_post(semaforo_cliente);
+    sem_post(semaforo_no_cliente);
     exit(0);
 }
