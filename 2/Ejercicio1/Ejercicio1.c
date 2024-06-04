@@ -15,9 +15,7 @@
 #define NomBiz "Biznieto"
 #define NomDemon "Demonio"
 
-void mostrarAyuda(){
-    printf("Ayuda");
-}
+void mostrarAyuda();
 
 void matarProceso(int signum) {
     exit(0);
@@ -26,6 +24,14 @@ void matarProceso(int signum) {
 
 int main(int argc,char* argv[])
 {
+
+    if(argc>1){
+        if(strcmp(argv[1],"-h")==0 || strcmp(argv[1],"--help")==0){
+            mostrarAyuda();
+            return 0;
+        }
+    }
+
     pid_t padre=getpid(),hijo1,zombie,hijo3,nieto1,nieto2,nieto3,biznieto,demonio;
 
     prctl(PR_SET_NAME, "Padre", NULL, NULL, NULL);
@@ -113,4 +119,41 @@ int main(int argc,char* argv[])
     kill(hijo3,SIGINT);
 
     return 0;
+}
+
+void mostrarAyuda(){
+    printf("\n---------------------------------------------------------------------------------------------------------\n");
+    printf("\t\t\tFuncion de ayuda del ejercicio 1:\n");
+    printf("\nIntegrantes:\n\t-MATHIEU ANDRES SANTAMARIA LOIACONO, MARTIN DIDOLICH, FABRICIO MARTINEZ, LAUTARO LASORSA, MARCOS EMIR AMISTOY QUELALI\n");
+
+    printf("\nPara preparar el entorno de desarrollo ejecutar el siguiente comando:\n");
+    printf("\n\t$sudo apt install build-essential\n");
+    printf("\nPara compilar los makefile ejecutar el siguiente comando:\n");
+    printf("\n\t$make (Ejercicio1)\n");
+
+    printf("\nDescripcion:");
+    printf("\n\tEl siguiente programa genera mediante el uso de la función fork la siguiente jerarquía de procesos:\n\n");
+    printf("\t\t         ----------Padre---------\n");
+    printf("\t\t           /         |        \\ \n");
+    printf("\t\t      Hijo1        Zombie      Hijo3\n");
+    printf("\t\t    /   |   \\                   |\n");
+    printf("\t\tNieto1 Nieto2 Nieto3          Demonio\n");
+    printf("\t\t                |\n");
+    printf("\t\t            Biznieto\n");
+
+    printf("\nEjemplos de llamdas:\n");
+    printf("\n\t$ ./Ejercicio1\n");
+    printf("\n\t$ ./Ejercicio1 -h\n");
+    printf("\n\t$ ./Ejercicio1 --help\n");
+
+    printf("\nNota:\n");
+    printf("\n\t-Al proceso Demonio lo genera el Hijo 3, pero queda ejecutando como un demonio.");
+    printf("\n\t-El proceso Demonio hay que matarlo luego de ejecutar el programa en caso de querer esto con kill (pid demonio).");
+    printf("\n\t-Solo recibe el parametro -h para mostrar la funcion de ayuda.\n");
+    printf("\n\t-El programa finaliza con enter (se quedara esperando poara poder visualizar los procesos en ejecucion).");
+    printf("\n\t-Al proceso Demonio lo genera el Hijo 3, pero queda ejecutando como un demonio.");
+    printf("\n\t-Para matar al proceso Demonio ejecutar el comando $ pkill Demonio.");
+    printf("\n\t-Para visualizar los procesos ejecutar el comando $ pstree -a.");
+    printf("\n---------------------------------------------------------------------------------------------------------\n");
+    return;
 }
