@@ -140,13 +140,56 @@ int main( int argc, char *argv[]){
 }
 
 void help(){
-    cout<<"Servidor del juego de la memoria"<<endl;
-    cout<<" IMPORTANTE: Solo puede haber un cliente por servidor y un servidor por computadora "<<endl;
-    cout<<" USO: ./servidor"<<endl;
-    cout<<" ./servidor -h | --help : muestra esta ayuda"<<endl;
-    cout<<" El servidor seguira ejecutandose aunque cierres esta ventana y solo puede cerrarse con el comando kill"<<endl;
-    cout<<" El servidor se encarga de inicializar el juego y esperar a que el cliente juegue"<<endl;
-    cout<<" El servidor se cierra con la señal SIGUSR1 y solo si no hay ningún cliente activo "<<endl;
+    printf("\n---------------------------------------------------------------------------------------------------------\n");
+    printf("\t\t\tFuncion de ayuda del ejercicio 4:\n");
+    printf("\nIntegrantes:\n\t-MATHIEU ANDRES SANTAMARIA LOIACONO, MARTIN DIDOLICH, FABRICIO MARTINEZ, LAUTARO LASORSA, MARCOS EMIR AMISTOY QUELALI\n");
+
+    printf("\nPara preparar el entorno de desarrollo ejecutar el siguiente comando:\n");
+    printf("\n\t$sudo apt install build-essential\n");
+    printf("\nPara compilar los makefile ejecutar el siguiente comando:\n");
+    printf("\n\t$make all\n");
+
+    printf("\nDescripcion:");
+    printf("\n\tEl siguiente programa ejecuta el juego de la memoria "Memotest", pero alfabetico \n\n");
+    printf("\n\tExistira un proceso “Cliente”, cuya tarea será mostrar por pantalla el estado actual del tablero y leer \n");
+    printf("\t\tdesde teclado el par de casillas que el usuario quiere destapar\n\n");
+    printf("\n\tExistira un proceso “Servidor”, que será el encargado de actualizar el estado del tablero en base al  \n");
+    printf("\t\tpar de casillas ingresado, así como controlar la finalización partida. \n\n");		
+
+    printf("\t\tEl tablero tendrá 16 casillas (4 filas x 4 columnas). \n\n");		
+    printf("\t\tSe debe garantizar que no se pueda ejecutar más de un cliente a la vez conectado al mismo servidor. \n\n");
+    printf("\t\tSe deberá garantizar que solo pueda haber un servidor por computadora. \n\n");
+    printf("\t\tEl tablero tendrá 16 casillas (4 filas x 4 columnas). \n\n");
+    printf("\t\tCada vez que se genere una nueva partida, el servidor deberá rellenar de manera aleatoria el tablero
+          con 8 pares de letras mayúsculas (A-Z). Cada letra seleccionada solo deberá aparecer dos veces en
+          posiciones también aleatorias. \n\n");
+    printf("\t\tEl servidor se ejecutará y quedará a la espera de que un cliente se ejecute. \n\n");
+    printf("\t\tTanto el cliente como el servidor deberán ignorar la señal SIGINT (Ctrl-C). \n\n");
+    printf("\t\tEl servidor deberá finalizar al recibir una señal SIGUSR1, siempre y cuando no haya ninguna partida en progreso. \n\n");
+
+    printf("\nInterfaz:");
+    printf("\n  0 1 2 3 \n");
+    printf("\n0 - - - -\n");
+    printf("\n1 - - - -\n");
+    printf("\n2 - - - -\n");
+    printf("\n3 - - - -\n");
+    printf("\nIngrese las coordenadas de fila y columna (0-3) de la celda que desea seleccionar");
+
+    printf("\nEjemplos de llamadas:\n");
+    printf("\nInicio Servidor:");
+    printf("\n\t$ ./servidor\n");
+    printf("\nAyuda:\n");
+    printf("\n\t$ ./servidor -h\n");
+    printf("\n\t$ ./servidor --help\n");
+
+    printf("\nNota:\n");
+    printf("\n\t- IMPORTANTE: Solo puede haber un cliente por servidor y un servidor por computadora.");
+    printf("\n\t- El Servidor finaliza con un SIGUSR1 (pid servidor).");
+    printf("\n\t- El servidor seguira ejecutandose aunque cierres esta ventana y solo puede cerrarse con el comando kill.");
+    printf("\n\t- El servidor se cierra con la señal SIGUSR1 y solo si no hay ningún cliente activo.");
+    printf("\n\t- El servidor se encarga de inicializar el juego y esperar a que el cliente juegue.");
+    printf("\n---------------------------------------------------------------------------------------------------------\n");
+    return;
 }
 
 void inicializar(char * memoria){
