@@ -13,9 +13,7 @@
 #define FIFO_PATH "/tmp/sensor_fifo"
 #define SEM_NAME "/sensor_sem"
 
-void sensor_process(int sensor_number, int num_messages, int interval
-                    // , sem_t *sem
-                    ) {
+void sensor_process(int sensor_number, int num_messages, int interval) {
     srand(time(NULL) + sensor_number); // Semilla para el generador de números aleatorios
     for (int i = 0; i < num_messages; i++) {
         if(i!=0)
@@ -28,9 +26,7 @@ void sensor_process(int sensor_number, int num_messages, int interval
             exit(EXIT_FAILURE);
         }
 
-        // sem_wait(sem); // Adquiere el semáforo antes de escribir en el FIFO
         dprintf(fifo_fd, "%d %d\n", sensor_number, measurement);
-        // sem_post(sem); // Indica que hay un nuevo mensaje listo para ser leído por el demonio
         close(fifo_fd);
 
 
@@ -115,16 +111,7 @@ int main(int argc, char *argv[]) {
 
     parse_arguments(argc, argv, &sensor_number, &interval, &num_messages);
 
-    // sem_t *sem = sem_open(SEM_NAME, O_RDWR);
-    // if (sem == SEM_FAILED) {
-    //     perror("sem_open");
-    //     exit(EXIT_FAILURE);
-    // }
+    sensor_process(sensor_number, num_messages, interval);
 
-    sensor_process(sensor_number, num_messages, interval
-                    // , sem
-                    );
-
-    // sem_close(sem);
     return 0;
 }
