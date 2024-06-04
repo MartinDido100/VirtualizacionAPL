@@ -12,8 +12,6 @@ void help();
 void mostrar(char memoria[4][4]);
 void muerte_ordenada(int sig);
 
-datos_compartidos * memoria;
-
 int main( int argc, char *argv[]){
     
     if(argc==2 and ( strcmp(argv[1],"-h")==0 or strcmp(argv[1],"--help")==0)){
@@ -21,98 +19,16 @@ int main( int argc, char *argv[]){
         return 0;
     }
 
+    int puerto;
+    
+
     signal(SIGINT, SIG_IGN);
     signal(SIGUSR1, muerte_ordenada);
     signal(SIGTERM, muerte_ordenada);
     signal(SIGHUP, muerte_ordenada);
     signal(SIGQUIT, muerte_ordenada);
 
-    auto semaforo_servidor = sem_open(
-        SEMAFORO_SERVIDOR.c_str(),
-        O_CREAT,
-        0600,
-        1
-    );
-
-    int value = 0;
-    sem_getvalue(semaforo_servidor, &value);
-    
-    if(value==1){
-        cerr << "\033[1;31mERROR : NO EXISTE UN SERVIDOR EN EJECUCION\033[0m" << endl;
-        return 1;
-    }
-
-    auto semaforo_cliente = sem_open(
-        SEMAFORO_CLIENTE.c_str(),
-        O_CREAT,
-        0600,
-        1
-    );
-
-    sem_getvalue(semaforo_cliente, &value);
-    if(value==0){
-        cerr << "\033[1;31mERROR : YA EXISTE UN CLIENTE EN EJECUCION\033[0m" << endl;
-        return 1;
-    }
-
-    sem_wait(semaforo_cliente);
-    
-    
-    int idMemoria = shm_open(MEMORIA_COMPARTIDA.c_str(), O_CREAT | O_RDWR, 0600);
-    
-    memoria = (datos_compartidos *)mmap(NULL,
-                            sizeof(datos_compartidos),
-                            PROT_READ | PROT_WRITE,
-                            MAP_SHARED,
-                            idMemoria,
-                            0);
-    
-    auto time_init = time(0);
-
-    auto semaforo_jugada_a = sem_open(
-            SEMAFORO_JUGADA_A.c_str(),
-            O_CREAT,
-            0600,
-            0
-    );
-
-    auto semaforo_jugada_b = sem_open(
-            SEMAFORO_JUGADA_B.c_str(),
-            O_CREAT,
-            0600,
-            0
-    );
-    
-    auto semaforo_no_cliente = sem_open(
-            SEMAFORO_NO_CLIENTE.c_str(),
-            O_CREAT,
-            0600,
-            0
-    );
-
-    while(!memoria->fin){
-        mostrar(memoria->mostrar);
-        int i,j;
-        cout<<"Ingrese las coordenadas de fila y columna (0 - 3) de la celda que desea seleccionar "<<endl;
-        cin>>i>>j;
-        
-        memoria->jugada[0] = char(i);
-        memoria->jugada[1] = char(j);
-
-        sem_post(semaforo_jugada_a);
-        sem_wait(semaforo_jugada_b);
-        cout<<"\033[2J\033[H";
-        printf("\n%s\n", memoria->mensaje);
-    }
-
-    auto time_final = time(0);
-
-    sem_post(semaforo_no_cliente);
-
-    cout << "\033[1;32mJuego terminado en " << (time_final - time_init) << " segundos y " << memoria->num_jugadas << " jugadas \033[0m" << endl;
-    // cout<<"Juego terminado en "<<time_final-time_init<<" segundos y "<<jugadas<<" jugadas "<<endl;
-
-    exit(0);
+   
 }
 
 void help(){
