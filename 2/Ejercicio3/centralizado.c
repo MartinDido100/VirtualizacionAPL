@@ -44,15 +44,13 @@ void daemon_process(const char *log_file_path) {
 
     // Abre el FIFO en modo lectura
     char buffer[128];
-    int fifo_fd = open(FIFO_PATH, O_RDONLY);
+    int fifo_fd = open(FIFO_PATH, O_RDONLY | O_NONBLOCK);
     if (fifo_fd == -1) {
         perror("open");
         fclose(log_file); // Cerrar el archivo de log antes de salir (si se abre correctamente)
         unlink(FIFO_PATH);
         exit(EXIT_FAILURE);
     }
-
-    printf("Proceso centralizado iniciado\n");
 
     // Lee mensajes del FIFO y escribirlos en el archivo de log
     while (running) {
