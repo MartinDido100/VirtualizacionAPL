@@ -13,25 +13,64 @@
 #define FIFO_PATH "/tmp/sensor_fifo"
 #define SEM_NAME "/sensor_sem"
 
+void sensor_process(int sensor_number, int num_messages, int interval);
+void parse_arguments(int argc, char* argv[], int* sensor_number, int* interval, int* num_messages);
+void show_help();
+
+int main(int argc, char *argv[]) {
+    // Si se pasa el argumento --help o -h, mostrar la ayuda
+    if (argc == 2 && (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0)) {
+        // Mostrar la ayuda y salir
+        show_help();
+        return 0;
+    }
+
+    // Inicializa las variables recibidas por parámetro
+    int sensor_number = -1;
+    int interval = -1;
+    int num_messages = -1;
+
+    // Parsea los argumentos
+    parse_arguments(argc, argv, &sensor_number, &interval, &num_messages);
+
+    // Ejecuta la función que interactúa con el FIFO
+    sensor_process(sensor_number, num_messages, interval);
+
+    return 0;
+}
+
 void sensor_process(int sensor_number, int num_messages, int interval) {
-    srand(time(NULL) + sensor_number); // Semilla para el generador de números aleatorios
+    // Semilla para el generador de números aleatorios
+    srand(time(NULL) + sensor_number); 
+
+    // Envía la cantidad de mensajes especificada por parámetro
     for (int i = 0; i < num_messages; i++) {
+
+        // Si no es la primera iteración, espera el intervalo de tiempo especificado
         if(i!=0)
             sleep(interval);
 
-        int measurement = rand() % 101; // Genera una medición aleatoria entre 0 y 100
+        // Genera una medición aleatoria entre 0 y 100
+        int measurement = rand() % 101;
+
+        // Abre el FIFO en modo escritura
         int fifo_fd = open(FIFO_PATH, O_WRONLY);
+
+        // Verifica si se pudo abrir el FIFO
         if (fifo_fd == -1) {
             perror("open");
             exit(EXIT_FAILURE);
         }
 
+        // Escribe el número del sensor y la medición en el FIFO
         dprintf(fifo_fd, "%d %d\n", sensor_number, measurement);
+
+        // Finaliza al escribir el mensaje y cierra el FIFO
         close(fifo_fd);
-
-
     }
-    exit(EXIT_FAILURE);
+
+    // Finaliza el proceso exitosamente
+    exit(EXIT_SUCCESS);
 }
 
 void parse_arguments(int argc, char* argv[], int* sensor_number, int* interval, int* num_messages) {
@@ -97,21 +136,4 @@ void show_help() {
     printf("\nLos valores enviados deben ser enteros positivos\n");
     printf("\nPuede haber varios sensores ejecutando al mismo tiempo");
 
-}
-
-int main(int argc, char *argv[]) {
-    if (argc == 2 && (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0)) {
-        // Mostrar la ayuda y salir
-        show_help();
-        return 0;
-    }
-    int sensor_number = -1;
-    int interval = -1;
-    int num_messages = -1;
-
-    parse_arguments(argc, argv, &sensor_number, &interval, &num_messages);
-
-    sensor_process(sensor_number, num_messages, interval);
-
-    return 0;
 }
