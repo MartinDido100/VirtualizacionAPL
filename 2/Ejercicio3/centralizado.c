@@ -27,14 +27,14 @@ void daemon_process(const char *log_file_path
                     ) {
 
     // Pide señal para la finalización
-    signal(SIGTERM, handle_sigterm);
+    signal(SIGTERM, handle_sigterm); //Aca no termina el proceso con usar SIGTERM
+
+    //DEBERIA SER UN PROCESO DEMONIO, EJECUTANDOSE EN SEGUNDO PLANO
 
     if (mkfifo(FIFO_PATH, 0666) == -1) {
         perror("mkfifo");
         exit(EXIT_FAILURE);
     }
-
-
 
     FILE *log_file = fopen(log_file_path, "a");
     if (!log_file) {
@@ -48,6 +48,9 @@ void daemon_process(const char *log_file_path
         perror("open");
         exit(EXIT_FAILURE);
     }
+
+    printf("Proceso centralizado iniciado\n");
+
     while (running) {
         // sem_wait(sem); // Adquiere el semáforo antes de leer del FIFO
         while (read(fifo_fd, buffer, sizeof(buffer)) > 0) {
@@ -94,16 +97,37 @@ void parse_arguments(int argc, char* argv[], char** log_file) {
 }
 
 // Función para mostrar la ayuda
-void show_help(const char* program_name) {
-    printf("Uso: %s --log <archivo_log>\n", program_name);
+void show_help() {
+    printf("\n---------------------------------------------------------------------------------------------------------\n");
+    printf("\t\t\tFuncion de ayuda del proceso centralizado del ejercicio 3:\n");
+    printf("\nIntegrantes:\n\t-MATHIEU ANDRES SANTAMARIA LOIACONO, MARTIN DIDOLICH, FABRICIO MARTINEZ, LAUTARO LASORSA, MARCOS EMIR AMISTOY QUELALI\n");
+
+    printf("\nPara preparar el entorno de desarrollo ejecutar el siguiente comando:\n");
+    printf("\n\t$sudo apt install build-essential\n");
+    printf("\nPara compilar los makefile ejecutar el siguiente comando:\n");
+    printf("\n\t$make all\n");
+    printf("\nPara borrar los archivos generados por el makefile ejecutar el siguiente comando:\n");
+    printf("\n\t$make clean\n");
+
+    printf("\nParametros\n");
+    printf("\n-l/--log: Archivo de log donde se irán escribiendo los mensajes. En caso de no existir es necesario crearlo. (Requerido)\n");
+
     printf("\nDescripción:\n");
-    printf("Este programa abre un FIFO para leer las entradas que le envían los distintos sensores y registra en un archivo de log la fecha, hora, número de sensor y medición.\n");
+    printf("\nEste programa abre un FIFO para leer los mensajes que le envían los distintos sensores y registra en un archivo de log la fecha, hora, número de sensor y medición.\n");
+    printf("\nEl programa queda ejecutando como proceso demonio, finaliza con una señal SIGTERM\n");
+
+    printf("\nEjemplos de llamadas:\n");
+    printf("\n\t$./centralizado --log /tmp/sensor.log\n");
+    printf("\n\t$./centralizado -l ./salida.log\n");
+
+    printf("\nAclaraciones:\n");
+    printf("\nLas rutas de los archivos pueden ser tanto relativas como absolutas y deben ser validas\n");
 }
 
 int main(int argc, char *argv[]) {
     if (argc == 2 && (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0)) {
         // Mostrar la ayuda y salir
-        show_help(argv[0]);
+        show_help();
         return 0;
     }
     char *log_file = NULL;
@@ -119,7 +143,6 @@ int main(int argc, char *argv[]) {
     //     perror("sem_open");
     //     exit(EXIT_FAILURE);
     // }
-
     daemon_process(resolved_path
                     //, sem
                     );

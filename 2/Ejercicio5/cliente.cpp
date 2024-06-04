@@ -20,23 +20,49 @@ int main( int argc, char *argv[]){
     }
 
     int puerto;
-    
 
     signal(SIGINT, SIG_IGN);
     signal(SIGUSR1, muerte_ordenada);
     signal(SIGTERM, muerte_ordenada);
     signal(SIGHUP, muerte_ordenada);
     signal(SIGQUIT, muerte_ordenada);
-
    
 }
 
 void help(){
-    cout<<"Cliente del juego de la memoria"<<endl;
-    cout<<" IMPORTANTE: Solo puede haber un cliente por servidor y un servidor por computadora "<<endl;
-    cout<<" USO: ./cliente"<<endl;
-    cout<<" ./cliente -h | --help : muestra esta ayuda"<<endl;
-    cout<<" El cliente permite al usuario jugar y le muestra el estado del juego por salida estandar (consola)"<<endl;
+    printf("\n---------------------------------------------------------------------------------------------------------\n");
+    printf("\t\t\tFuncion de ayuda del ejercicio 5:\n");
+    printf("\nIntegrantes:\n\t-MATHIEU ANDRES SANTAMARIA LOIACONO, MARTIN DIDOLICH, FABRICIO MARTINEZ, LAUTARO LASORSA, MARCOS EMIR AMISTOY QUELALI\n");
+
+    printf("\nPara preparar el entorno de desarrollo ejecutar el siguiente comando:\n");
+    printf("\n\t$sudo apt install build-essential\n");
+    printf("\nPara compilar los makefile ejecutar el siguiente comando:\n");
+    printf("\n\t$make all\n");
+
+    printf("\nDescripcion:");
+    printf("\n\tEl siguiente programa ejecuta el juego de la memoria Memotest, pero alfabetico \n\n");
+    printf("\nEl programa se implementa a travez de de conexiones de red, pudiendo admitir más de un cliente por servidor.");
+    printf("\nEl cliente debe solicitar la dirección IP (o el nombre) del servidor y el puerto del mismo.");
+
+    printf("\nParametros\n");
+    printf("\n-n/--nickname: Nickname del usuario. (Requerido)\n");
+    printf("\n-p/--puerto: Puerto del servidor. (Requerido)\n");
+    printf("\n-s/--servidor: Dirección IP o nombre del servidor (Requerido)\n");
+
+    printf("\nEjemplos de llamadas:\n");
+    printf("\n\t$./cliente -n Pepe -p 8080 -s <IP>\n");
+    printf("\n\t$./cliente --nickname Pepe --puerto 8080 --servidor <IP>\n");
+
+    printf("\n---------------------------------------------------------------------------------------------------------\n");
+
+    printf("\nAclaraciones\n");
+    printf("\n\tEl juego de la memoria Memotest consiste en encontrar las parejas de letras en el menor tiempo posible.");
+    printf("\n\tEl juego finaliza cuando se encuentran todas las parejas.");
+    printf("\n1. Si el servidor se cae (deja de funcionar) o es detenido, los clientes deben seran notificados y se cerrara de forma controlada.\n");
+    printf("\n2. Si alguno de los clientes se cae o es detenido, el servidor indentifica el problema ,cierra la conexión de forma controlada y sigue funcionando hasta que solo quede un cliente\n");
+    printf("\n3. Los clientes pueden ver el estado actualizado del tablero cuando ocurran aciertos y solo se permitirá una jugada por turno de cada cliente\n");
+    printf("\nSe llevara un marcador indicando cuantos aciertos realizó cada jugador y al final mostrara el ganador.\n");
+
 }
 
 void mostrar(char memoria[4][4]){

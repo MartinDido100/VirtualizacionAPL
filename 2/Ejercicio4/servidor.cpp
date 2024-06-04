@@ -234,7 +234,6 @@ void muerte_ordenada(int sig){
     sem_unlink(SEMAFORO_JUGADA_B.c_str());
     shm_unlink(MEMORIA_COMPARTIDA.c_str());
     exit(0);
-    
 }
 
 void inicializar_compartido(datos_compartidos * memoria){
