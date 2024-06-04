@@ -135,14 +135,37 @@ int main( int argc, char *argv[]){
 }
 
 void help(){
-    cout<<"Servidor del juego de la memoria"<<endl;
-    cout<<" USO: ./servidor"<<endl;
-    cout<<" ./servidor -h | --help : muestra esta ayuda"<<endl;
-    cout<<" Parametros obligatorios:"<<endl;
-    cout<<" \t -p | --puerto : puerto de conexion. Debe ser no negativo."<<endl;
-    cout<<" \t -j | --jugadores : numero de jugadores en la sala. Debe ser positivo."<<endl;
-    cout<<" El servidor se comunica con los clientes mediante sockets."<<endl;
-    cout<<" Una vez iniciado el juego no puden sumarse nuevos jugadores."<<endl;
+    printf("\n---------------------------------------------------------------------------------------------------------\n");
+    printf("\t\t\tFuncion de ayuda del ejercicio 5:\n");
+    printf("\nIntegrantes:\n\t-MATHIEU ANDRES SANTAMARIA LOIACONO, MARTIN DIDOLICH, FABRICIO MARTINEZ, LAUTARO LASORSA, MARCOS EMIR AMISTOY QUELALI\n");
+
+    printf("\nPara preparar el entorno de desarrollo ejecutar el siguiente comando:\n");
+    printf("\n\t$sudo apt install build-essential\n");
+    printf("\nPara compilar los makefile ejecutar el siguiente comando:\n");
+    printf("\n\t$make all\n");
+
+    printf("\nDescripcion:");
+    printf("\n\tEl siguiente programa ejecuta el juego de la memoria Memotest, pero alfabetico \n\n");
+    printf("\nEl programa se implementa a travez de de conexiones de red, pudiendo admitir más de un cliente por servidor.");
+    printf("\nEl servidor debe tomar por parámetro el puerto y la cantidad de clientes necesarios para iniciar la partida");
+
+    printf("\nParametros\n");
+    printf("\n-p/--puerto: Numero del puerto. (Requerido)\n");
+    printf("\n-j/--jugadores:Cantidad de jugadores a esperar para iniciar la sala. (Requerido)\n");
+
+    printf("\nEjemplos de llamadas:\n");
+    printf("\n\t$./servidor -p 8080 -j 2\n");
+    printf("\n\t$./servidor --puerto 8080 --jugadores 2\n");
+
+    printf("\n---------------------------------------------------------------------------------------------------------\n");
+
+    printf("\nAclaraciones\n");
+    printf("\n\tEl juego de la memoria Memotest consiste en encontrar las parejas de letras en el menor tiempo posible.");
+    printf("\n\tEl juego finaliza cuando se encuentran todas las parejas.");
+    printf("\n1. Si el servidor se cae (deja de funcionar) o es detenido, los clientes deben seran notificados y se cerrara de forma controlada.\n");
+    printf("\n2. Si alguno de los clientes se cae o es detenido, el servidor indentifica el problema ,cierra la conexión de forma controlada y sigue funcionando hasta que solo quede un cliente\n");
+    printf("\n3. Los clientes pueden ver el estado actualizado del tablero cuando ocurran aciertos y solo se permitirá una jugada por turno de cada cliente\n");
+    printf("\nSe llevara un marcador indicando cuantos aciertos realizó cada jugador y al final mostrara el ganador.\n");
 }
 
 void inicializar(char * memoria){

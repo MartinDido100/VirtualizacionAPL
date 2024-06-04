@@ -43,6 +43,7 @@ void parse_arguments(int argc, char* argv[], int* sensor_number, int* interval, 
         {"numero", required_argument, 0, 'n'},
         {"segundos", required_argument, 0, 's'},
         {"mensajes", required_argument, 0, 'm'},
+        {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
 
@@ -71,16 +72,41 @@ void parse_arguments(int argc, char* argv[], int* sensor_number, int* interval, 
 }
 
 // Función para mostrar la ayuda
-void show_help(const char* program_name) {
-    printf("Uso: %s --numero <numero_sensor> --segundos <intervalo> --mensajes <num_mensajes>\n", program_name);
+void show_help() {
+    printf("\n---------------------------------------------------------------------------------------------------------\n");
+    printf("\t\t\tFuncion de ayuda del sensor del ejercicio 3:\n");
+    printf("\nIntegrantes:\n\t-MATHIEU ANDRES SANTAMARIA LOIACONO, MARTIN DIDOLICH, FABRICIO MARTINEZ, LAUTARO LASORSA, MARCOS EMIR AMISTOY QUELALI\n");
+
+    printf("\nPara preparar el entorno de desarrollo ejecutar el siguiente comando:\n");
+    printf("\n\t$sudo apt install build-essential\n");
+    printf("\nPara compilar los makefile ejecutar el siguiente comando:\n");
+    printf("\n\t$make all\n");
+    printf("\nPara borrar los archivos generados por el makefile ejecutar el siguiente comando:\n");
+    printf("\n\t$make clean\n");
+
+    printf("\nParametros\n");
+    printf("\n-n/--numero: Número del sensor (Requerido)\n");
+    printf("\n-s/--segundos: Intervalo en segundos para el envío del mensaje (Requerido)\n");
+    printf("\n-m / --mensajes: Cantidad de mensajes a enviar (Requerido)\n");
+
     printf("\nDescripción:\n");
-    printf("Este programa escribe en un FIFO las entradas que le envían los distintos sensores.\n");
+    printf("\nLos procesos sensores toman por parámetro el número que les corresponde, y para hacer la simulación generan cada una cierta cantidad de segundos una medición que generan en forma aleatoria, informando el mensaje vía el FIFO con su número de sensor y la medición a registrar\n");
+    printf("\nEl proceso de un sensor finaliza luego de enviar la cantidad de mensajes especificada\n");
+
+    printf("\nEjemplos de llamadas:\n");
+    printf("\n\t$./sensor --numero 1 --segundos 5 --mensajes 10\n");
+    printf("\n\t$./sensor -n 2 -s 3 -m 5\n");
+
+    printf("\nAclaraciones:\n");
+    printf("\nLos valores enviados deben ser enteros positivos\n");
+    printf("\nPuede haber varios sensores ejecutando al mismo tiempo");
+
 }
 
 int main(int argc, char *argv[]) {
     if (argc == 2 && (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0)) {
         // Mostrar la ayuda y salir
-        show_help(argv[0]);
+        show_help();
         return 0;
     }
     int sensor_number = -1;

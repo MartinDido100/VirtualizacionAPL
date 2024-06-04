@@ -23,6 +23,7 @@ int aparicionesTotales[10] = {0};
 int revisarParametros(int argc,char* argv[],int* cantHilos,char** input,char** output);
 void procesarDirectorio(DIR* dir,char* input,int cantHilos,FILE* outFile);
 void* procesarArchivos(void* args);
+void mostrarAyuda();
 
 int main(int argc,char* argv[]){
 
@@ -37,7 +38,7 @@ int main(int argc,char* argv[]){
 
     DIR* dir = opendir(input);
     if (dir == NULL) {
-        printf("Error no existe el archivo\n");
+        printf("Error no existe el directorio de entrada\n");
         return 1;
     }
 
@@ -72,11 +73,54 @@ int main(int argc,char* argv[]){
     return 0;   
 }
 
+void mostrarAyuda(){
+    printf("\n---------------------------------------------------------------------------------------------------------\n");
+    printf("\t\t\tFuncion de ayuda del ejercicio 2:\n");
+    printf("\nIntegrantes:\n\t-MATHIEU ANDRES SANTAMARIA LOIACONO, MARTIN DIDOLICH, FABRICIO MARTINEZ, LAUTARO LASORSA, MARCOS EMIR AMISTOY QUELALI\n");
+
+    printf("\nPara preparar el entorno de desarrollo ejecutar el siguiente comando:\n");
+    printf("\n\t$sudo apt install build-essential\n");
+    printf("\nPara compilar los makefile ejecutar el siguiente comando:\n");
+    printf("\n\t$make (Ejercicio2)\n");
+    printf("\nPara borrar los archivos generados por el makefile ejecutar el siguiente comando:\n");
+    printf("\n\t$make clean\n");
+
+    printf("\nParametros\n");
+    printf("\n-t/--threads <nro>: Cantidad de threads a ejecutar concurrentemente para procesar los archivos del directorio (Requerido). El número ingresado debe ser un entero positivo.\n");
+    printf("\n-i/--input <directorio>: Ruta del directorio a analizar. (Requerido)\n");
+    printf("\n-o/--output <archivo>: Ruta del archivo con los resultados del procesamiento. (Opcional)");
+    printf("\n-h/--help: Muestra la ayuda del programa\n");
+
+    printf("\nDescripcion\n");
+    printf("\nEl programa es capaz de contar la cantidad de números del 0 al 9 que aparece en todos los archivos de texto (con extensión .txt) que se encuentra en el directorio pasado por parametros.");
+    printf("\nCada hilo lee un archivo y contabilizar la cantidad de número que leyó. Adicionalmente al final se menciona la cantidad de números leídos totales.\n");
+    printf("\nPor ejemplo: la palabra: “Hola C-3PO, soy R2-D2”, sumaría una aparición al número “3” y dos apariciones al número “2”.\n");
+    printf("\nOpcionalmente, si se recibe el parámetro -o / --output se generará un archivo con los resultados de los archivosprocesados.\n");
+
+    printf("\nEjemplo de salida por pantalla\n");
+    printf("\nThread 1: Archivo leído test.txt. Apariciones 0=${cantCeros}, 1=${cantUnos}, etc\n");
+    printf("\nThread 2: Archivo leído prueba.txt. Apariciones 0=${cantCeros}, 1=${cantUnos}, etc\n");
+    printf("\nThread 1: Archivo leído pepe.txt. Apariciones 0=${cantCeros}, 1=${cantUnos}, etc\n");
+    printf("\nFinalizado lectura: Apariciones total: 0=${cantTotalCeros}, 1=${cantTotalUnos}, etc\n");
+
+    printf("\nEjemplos de llamadas:\n");
+    printf("\n$./Ejercicio2 -t 3 -i ./archivos");
+    printf("\n$./Ejercicio2 --threads 2 --input home/user/Ejercicio2/archivos");
+    printf("\n$./Ejercicio2 -t 3 -i ./archivos -o ./salida.txt"); //Chequear que output sea solo txt
+    printf("\n$./Ejercicio2 -h\n");
+
+    printf("\nAclaraciones:\n");
+    printf("\nLas rutas de los archivos pueden ser tanto relativas como absolutas y deben ser validas\n");
+    printf("\nSe leeran solo archivos .txt que esten en el directorio de entrada\n");
+    printf("\nLa extension del archivo de salida debe ser obligatoriamente .txt\n");
+    printf("\nEl numero de hilos debe ser un entero positivo\n");
+}
+
 int revisarParametros(int argc,char* argv[],int* cantHilos,char** input,char** output){
     int i;
     for(int i = 1; i < argc; i++){
         if(strcmp(argv[i],"-h") == 0 || strcmp(argv[i],"--help") == 0){
-            printf("Ayudita");
+            mostrarAyuda();
             return 1;
         }
 
@@ -89,6 +133,10 @@ int revisarParametros(int argc,char* argv[],int* cantHilos,char** input,char** o
         }
 
         if(strcmp(argv[i],"-o") == 0 || strcmp(argv[i],"--output") == 0){
+            if(strstr(argv[i+1],".txt") == NULL){
+                printf("Error, el archivo de salida debe tener extension .txt");
+                return 1;
+            }
             *output = argv[i+1];
         }
     }
