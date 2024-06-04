@@ -141,7 +141,7 @@ void mostrarAyuda(){
     printf("\t\t                |\n");
     printf("\t\t            Biznieto\n");
 
-    printf("\nEjemplos de llamdas:\n");
+    printf("\nEjemplos de llamadas:\n");
     printf("\n\t$ ./Ejercicio1\n");
     printf("\n\t$ ./Ejercicio1 -h\n");
     printf("\n\t$ ./Ejercicio1 --help\n");
