@@ -76,7 +76,7 @@ int main(int argc,char* argv[]){
 void mostrarAyuda(){
     printf("\n---------------------------------------------------------------------------------------------------------\n");
     printf("\t\t\tFuncion de ayuda del ejercicio 2:\n");
-    printf("\nIntegrantes:\n\t-MATHIEU ANDRES SANTAMARIA LOIACONO, MARTIN DIDOLICH, FABRICIO MARTINEZ, LAUTARO LASORSA, MARCOS EMIR AMISTOY QUELALI\n");
+    printf("\nIntegrantes:\n\t-MATHIEU ANDRES SANTAMARIA LOIACONO, MARTIN DIDOLICH, FABRICIO MARTINEZ, LAUTARO LASORSA, MARCOS EMIR QUELALI AMISTOY\n");
 
     printf("\nPara preparar el entorno de desarrollo ejecutar el siguiente comando:\n");
     printf("\n\t$sudo apt install build-essential\n");

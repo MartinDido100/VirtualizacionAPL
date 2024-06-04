@@ -10,9 +10,11 @@
 #include <string.h>
 #include <getopt.h>
 #include <limits.h>
+#include <sys/prctl.h>
 
 #define FIFO_PATH "/tmp/sensor_fifo"
 #define SEM_NAME "/sensor_sem"
+#define NomDemon "Centralizado"
 
 volatile sig_atomic_t running = 1;
 
@@ -22,14 +24,10 @@ void handle_sigterm(int sig) {
     }
 }
 
-void daemon_process(const char *log_file_path
-                    // , sem_t *sem
-                    ) {
+void daemon_process(const char *log_file_path) {
 
     // Pide señal para la finalización
-    signal(SIGTERM, handle_sigterm); //Aca no termina el proceso con usar SIGTERM
-
-    //DEBERIA SER UN PROCESO DEMONIO, EJECUTANDOSE EN SEGUNDO PLANO
+    signal(SIGTERM, handle_sigterm);
 
     if (mkfifo(FIFO_PATH, 0666) == -1) {
         perror("mkfifo");
@@ -39,20 +37,25 @@ void daemon_process(const char *log_file_path
     FILE *log_file = fopen(log_file_path, "a");
     if (!log_file) {
         perror("fopen");
+        printf("\nruta: %s\n", log_file_path);
+        unlink(FIFO_PATH);
         exit(EXIT_FAILURE);
     }
 
+    // Abre el FIFO en modo lectura
     char buffer[128];
     int fifo_fd = open(FIFO_PATH, O_RDONLY);
     if (fifo_fd == -1) {
         perror("open");
+        fclose(log_file); // Cerrar el archivo de log antes de salir (si se abre correctamente)
+        unlink(FIFO_PATH);
         exit(EXIT_FAILURE);
     }
 
     printf("Proceso centralizado iniciado\n");
 
+    // Lee mensajes del FIFO y escribirlos en el archivo de log
     while (running) {
-        // sem_wait(sem); // Adquiere el semáforo antes de leer del FIFO
         while (read(fifo_fd, buffer, sizeof(buffer)) > 0) {
             time_t now = time(NULL);
             char *timestamp = ctime(&now);
@@ -61,14 +64,11 @@ void daemon_process(const char *log_file_path
             fflush(log_file);
             memset(buffer, 0, sizeof(buffer)); // Limpiar el buffer después de procesar
         }
-        // sem_post(sem); // Libera el semáforo después de leer del FIFO
     }
     close(fifo_fd);
 
     fclose(log_file);
     unlink(FIFO_PATH);
-    // sem_close(sem);
-    // sem_unlink(SEM_NAME);
     exit(EXIT_SUCCESS);
 }
 
@@ -100,7 +100,7 @@ void parse_arguments(int argc, char* argv[], char** log_file) {
 void show_help() {
     printf("\n---------------------------------------------------------------------------------------------------------\n");
     printf("\t\t\tFuncion de ayuda del proceso centralizado del ejercicio 3:\n");
-    printf("\nIntegrantes:\n\t-MATHIEU ANDRES SANTAMARIA LOIACONO, MARTIN DIDOLICH, FABRICIO MARTINEZ, LAUTARO LASORSA, MARCOS EMIR AMISTOY QUELALI\n");
+    printf("\nIntegrantes:\n\t-MATHIEU ANDRES SANTAMARIA LOIACONO, MARTIN DIDOLICH, FABRICIO MARTINEZ, LAUTARO LASORSA, MARCOS EMIR QUELALI AMISTOY\n");
 
     printf("\nPara preparar el entorno de desarrollo ejecutar el siguiente comando:\n");
     printf("\n\t$sudo apt install build-essential\n");
@@ -133,19 +133,40 @@ int main(int argc, char *argv[]) {
     char *log_file = NULL;
     parse_arguments(argc, argv, &log_file);
 
+    pid_t demonio;
+    
+    demonio=fork();
+    if(demonio==0){
+        printf("Ejecutando el proceso %s con PID %d\n",NomDemon,getpid());
+        if (setsid() < 0) {
+            perror("setsid");
+            exit(EXIT_FAILURE);
+        }
 
+        // Obtiene la ruta absoluta (si es relativa)
+        char resolved_path[PATH_MAX];
+        realpath(log_file, resolved_path);
+        if (chdir("/") < 0) {
+            perror("chdir");
+            exit(EXIT_FAILURE);
+        }
 
-    // Obtén la ruta absoluta (si es relativa)
-    char resolved_path[PATH_MAX];
-    realpath(log_file, resolved_path);
-    // sem_t *sem = sem_open(SEM_NAME, O_CREAT, 0666, 1);
-    // if (sem == SEM_FAILED) {
-    //     perror("sem_open");
-    //     exit(EXIT_FAILURE);
-    // }
-    daemon_process(resolved_path
-                    //, sem
-                    );
+        daemon_process(resolved_path);
+        
+        // Se cierran descriptores de archivo estándar
+        close(STDIN_FILENO);
+        close(STDOUT_FILENO);
+        close(STDERR_FILENO);
+
+        // Cambia el nombre del proceso
+        if (prctl(PR_SET_NAME, NomDemon, NULL, NULL, NULL) < 0) {
+            perror("prctl");
+            exit(EXIT_FAILURE);
+        }
+
+        exit(EXIT_SUCCESS);
+    }
+
 
     return 0;
 }
