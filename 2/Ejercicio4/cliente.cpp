@@ -163,15 +163,15 @@ void help(){
     return;
 }
 
-void mostrar(char memoria[4][4]){
+void mostrar(char tablero[4][4]){
     cout << "\t0\t1\t2\t3" << endl;
     for(int i = 0; i < 4; i++){
         cout << i << "\t";
         for(int j = 0; j < 4; j++){
-            if(memoria[i][j] >= 'A' and memoria[i][j] <= 'Z'){
-                cout << "\033[1;32m" << memoria[i][j] << "\033[0m\t";
-            }else if(memoria[i][j] >= -'Z' and memoria[i][j] <= -'A'){
-                cout << "\033[1;33m" << char(-memoria[i][j]) << "\033[0m\t";
+            if(tablero[i][j] >= 'A' and tablero[i][j] <= 'Z'){
+                cout << "\033[1;32m" << tablero[i][j] << "\033[0m\t";
+            }else if(tablero[i][j] >= -'Z' and tablero[i][j] <= -'A'){
+                cout << "\033[1;33m" << char(-tablero[i][j]) << "\033[0m\t";
             }else{
                 cout<<"-\t";
             }

@@ -1,15 +1,15 @@
 #Makefile
 
 CC = g++
-CFLAGS = -Wall -Wextra
+CFLAGS = -Wall -Wextra -Wshadow
 
-all: cliente servidor
+all: cliente servidor Makefile
 
-cliente: cliente.cpp config.hpp
-	$(CC) $(CFLAGS) -o cliente cliente.cpp
+cliente: cliente.cpp Makefile
+	$(CC) $(CFLAGS) -g -o cliente cliente.cpp
 
-servidor: servidor.cpp config.hpp
-	$(CC) $(CFLAGS) -o servidor servidor.cpp
+servidor: servidor.cpp Makefile
+	$(CC) $(CFLAGS) -g -o servidor servidor.cpp
 
 clean:
 	rm -f cliente servidor

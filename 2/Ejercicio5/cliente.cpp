@@ -1,36 +1,150 @@
-#include <bits/stdc++.h>
-#include <stdlib.h>
+#include <iostream>
+#include <string>
 #include <unistd.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <semaphore.h>
-#include "config.hpp"
+#include <arpa/inet.h>
+#include <cstring>
+
 using namespace std;
 
-void help();
 void mostrar(char memoria[4][4]);
-void muerte_ordenada(int sig);
+void mostrar_ayuda();
 
-int main( int argc, char *argv[]){
-    
-    if(argc==2 and ( strcmp(argv[1],"-h")==0 or strcmp(argv[1],"--help")==0)){
-        help();
-        return 0;
+int main(int argc, char *argv[]) {
+    string nickname;
+    string server_ip;
+    int server_port;
+
+    for (int i = 1; i < argc; i += 2) {
+        string arg = argv[i];
+        if (arg == "-n" || arg == "--nickname") {
+            nickname = argv[i + 1];
+        } else if (arg == "-s" || arg == "--servidor") {
+            server_ip = argv[i + 1];
+        } else if (arg == "-p" || arg == "--puerto") {
+            server_port = stoi(argv[i + 1]);
+        } else if(arg == "-h" || arg == "--help"){
+            mostrar_ayuda();
+            return 0;
+        } else {
+            cerr << "Argumento no reconocido: " << arg << endl;
+            return 1;
+        }
     }
 
-    int puerto;
+    if (nickname.empty() || server_ip.empty() || server_port == 0) {
+        cerr << "Usage: " << argv[0] << " -n <nickname> -s <server_ip> -p <server_port>" << endl;
+        return 1;
+    }
 
-    signal(SIGINT, SIG_IGN);
-    signal(SIGUSR1, muerte_ordenada);
-    signal(SIGTERM, muerte_ordenada);
-    signal(SIGHUP, muerte_ordenada);
-    signal(SIGQUIT, muerte_ordenada);
-   
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock < 0) {
+        perror("socket");
+        return 1;
+    }
+
+    sockaddr_in server_addr;
+    memset(&server_addr, 0, sizeof(server_addr));
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(server_port);
+    if (inet_pton(AF_INET, server_ip.c_str(), &server_addr.sin_addr) <= 0) {
+        cerr << "Invalid address: " << server_ip << endl;
+        return 1;
+    }
+
+    if (connect(sock, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
+        perror("connect");
+        return 1;
+    }
+
+    send(sock, nickname.c_str(), nickname.size(), 0);
+
+    char buffer[2048];
+    char jugada[2];
+    bool jugando = true;
+
+    while (jugando) {
+        
+        // Check if the connection with sock is still active
+        int error = 0;
+        socklen_t len = sizeof(error);
+        int status = getsockopt(sock, SOL_SOCKET, SO_ERROR, &error, &len);
+        if (status != 0 || error != 0) {
+            cerr << "\033[1;31mSe perdió conexión con el servidor\033[0m" << endl;
+            break;
+        }
+
+        // Recibir actualización del tablero
+        int bytes_received = recv(sock, buffer, sizeof(buffer), 0);
+        
+        if(((std::string) buffer).find("--- FIN DEL JUEGO ---") != std::string::npos){
+            cout<<buffer<<endl;
+            jugando = false;
+            break;
+        }
+        
+        // std::cout << "Se recibieron en total: " << bytes_received << std::endl;
+        if (bytes_received <= 0) {
+            cerr << "\033[1;31mSe perdió conexión con el servidor\033[0m" << endl;
+            break;
+        }
+
+        buffer[bytes_received] = '\0';
+
+        // cout << "\n Acá arranca el buffer -> " << buffer << " <-Este es el buffer" << endl;
+        int esJugada = ((std::string) buffer).find("jugador") == std::string::npos &&
+        ((std::string) buffer).find("ACIERTO") == std::string::npos &&
+        ((std::string) buffer).find("FALLO") == std::string::npos &&
+        ((std::string) buffer).find("turno") == std::string::npos &&
+        ((std::string) buffer).find("Servidor:") == std::string::npos;
+
+        if (esJugada) {
+            mostrar((char(*)[4])buffer);
+        } else {
+            int miTurno = 0;
+            miTurno = (((std::string) buffer).find("tu turno") != std::string::npos);
+            if (miTurno) {
+                cout << "\033[1;31m" << buffer << "\033[0m" << endl;
+
+                int i, j;
+                cout << "Ingrese las coordenadas de fila y columna (0 - 3) de la celda que desea seleccionar: ";
+                cin >> i >> j;
+
+                jugada[0] = char(i);
+                jugada[1] = char(j);
+
+                send(sock, jugada, sizeof(jugada), 0);
+            } else {
+                cout << buffer << endl;
+            }
+        }
+    }
+
+    cout << "Juego Finalizado" << endl;
+
+    close(sock);
+    return 0;
 }
 
-void help(){
-    printf("\n---------------------------------------------------------------------------------------------------------\n");
+void mostrar(char memoria[4][4]){
+    cout << "\t0\t1\t2\t3" << endl;
+    for(int i = 0; i < 4; i++){
+        cout << i << "\t";
+        for(int j = 0; j < 4; j++){
+            if(memoria[i][j] >= 'A' and memoria[i][j] <= 'Z'){
+                cout << "\033[1;32m" << memoria[i][j] << "\033[0m\t";
+            }else if(memoria[i][j] >= -'Z' and memoria[i][j] <= -'A'){
+                cout << "\033[1;33m" << char(-memoria[i][j]) << "\033[0m\t";
+            }else{
+                cout<<"-\t";
+            }
+        }
+        cout << endl;
+    }
+    cout << "\033[0m";
+}
+
+void mostrar_ayuda(){
+        printf("\n---------------------------------------------------------------------------------------------------------\n");
     printf("\t\t\tFuncion de ayuda del ejercicio 5:\n");
     printf("\nIntegrantes:\n\t-MATHIEU ANDRES SANTAMARIA LOIACONO, MARTIN DIDOLICH, FABRICIO MARTINEZ, LAUTARO LASORSA, MARCOS EMIR QUELALI AMISTOY\n");
 
@@ -52,7 +166,7 @@ void help(){
     printf("\nEjemplos de llamadas:\n");
     printf("\n\t$./cliente -n Pepe -p 8080 -s <IP>\n");
     printf("\n\t$./cliente --nickname Pepe --puerto 8080 --servidor <IP>\n");
-
+    printf("\n\tRecordar que puede utilizar la ip 127.0.0.1 para acceder a un servidor local\n");
     printf("\n---------------------------------------------------------------------------------------------------------\n");
 
     printf("\nAclaraciones\n");
@@ -63,52 +177,4 @@ void help(){
     printf("\n3. Los clientes pueden ver el estado actualizado del tablero cuando ocurran aciertos y solo se permitirá una jugada por turno de cada cliente\n");
     printf("\nSe llevara un marcador indicando cuantos aciertos realizó cada jugador y al final mostrara el ganador.\n");
 
-}
-
-void mostrar(char memoria[4][4]){
-    cout << "\t0\t1\t2\t3" << endl;
-    for(int i = 0; i < 4; i++){
-        cout << i << "\t";
-        for(int j = 0; j < 4; j++){
-            if(memoria[i][j] >= 'A' and memoria[i][j] <= 'Z'){
-                cout << "\033[1;32m" << memoria[i][j] << "\033[0m\t";
-            }else if(memoria[i][j] >= -'Z' and memoria[i][j] <= -'A'){
-                cout << "\033[1;33m" << char(-memoria[i][j]) << "\033[0m\t";
-            }else{
-                cout<<"-\t";
-            }
-        }
-        cout << endl;
-    }
-    cout << "\033[0m";
-}
-
-void muerte_ordenada(int sig){
-    cerr << "Signal : "<<sig<<endl;
-    cout << "\033[1;31mEl cliente se cerrara\033[0m" << endl;
-    
-    memoria->fin = true;
-
-    auto semaforo_jugada_a = sem_open(
-            SEMAFORO_JUGADA_A.c_str(),
-            O_CREAT,
-            0600,
-            0
-    );
-
-    int value;
-    sem_getvalue(semaforo_jugada_a, &value);
-    if(value==0){
-        sem_post(semaforo_jugada_a);
-    }
-    
-    auto semaforo_no_cliente = sem_open(
-            SEMAFORO_NO_CLIENTE.c_str(),
-            O_CREAT,
-            0600,
-            0
-    );
-
-    sem_post(semaforo_no_cliente);
-    exit(0);
 }
