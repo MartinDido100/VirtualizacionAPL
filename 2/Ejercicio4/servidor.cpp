@@ -150,7 +150,7 @@ void help(){
     printf("\n\t$make all\n");
 
     printf("\nDescripcion:");
-    printf("\n\tEl siguiente programa ejecuta el juego de la memoria "Memotest", pero alfabetico \n\n");
+    printf("\n\tEl siguiente programa ejecuta el juego de la memoria \"Memotest\", pero alfabetico \n\n");
     printf("\n\tExistira un proceso “Cliente”, cuya tarea será mostrar por pantalla el estado actual del tablero y leer \n");
     printf("\t\tdesde teclado el par de casillas que el usuario quiere destapar\n\n");
     printf("\n\tExistira un proceso “Servidor”, que será el encargado de actualizar el estado del tablero en base al  \n");
@@ -160,9 +160,7 @@ void help(){
     printf("\t\tSe debe garantizar que no se pueda ejecutar más de un cliente a la vez conectado al mismo servidor. \n\n");
     printf("\t\tSe deberá garantizar que solo pueda haber un servidor por computadora. \n\n");
     printf("\t\tEl tablero tendrá 16 casillas (4 filas x 4 columnas). \n\n");
-    printf("\t\tCada vez que se genere una nueva partida, el servidor deberá rellenar de manera aleatoria el tablero
-          con 8 pares de letras mayúsculas (A-Z). Cada letra seleccionada solo deberá aparecer dos veces en
-          posiciones también aleatorias. \n\n");
+    printf("\t\tCada vez que se genere una nueva partida, el servidor deberá rellenar de manera aleatoria el tablero con 8 pares de letras mayúsculas (A-Z). Cada letra seleccionada solo deberá aparecer dos veces en posiciones también aleatorias. \n\n");
     printf("\t\tEl servidor se ejecutará y quedará a la espera de que un cliente se ejecute. \n\n");
     printf("\t\tTanto el cliente como el servidor deberán ignorar la señal SIGINT (Ctrl-C). \n\n");
     printf("\t\tEl servidor deberá finalizar al recibir una señal SIGUSR1, siempre y cuando no haya ninguna partida en progreso. \n\n");
@@ -217,17 +215,24 @@ void inicializar(char * memoria){
 
 void muerte_ordenada(int sig){
     
-    cerr << "Signal "<<sig<<endl;
-    cout << "\033[1;31m CERRANDO SERVIDOR\t\033[0m" << endl;
-    
+    int value = 0;
     auto semaforo_cliente = sem_open(
         SEMAFORO_CLIENTE.c_str(),
         O_CREAT,
         0600,
         0
     );
+    sem_getvalue(semaforo_cliente, &value);
+    if(value==0){
+        return;
+    }
+    
 
-    sem_wait(semaforo_cliente);
+    cerr << "Signal "<<sig<<endl;
+    cout << "\033[1;31m CERRANDO SERVIDOR\t\033[0m" << endl;
+    
+    
+    // sem_wait(semaforo_cliente);
     sem_unlink(SEMAFORO_CLIENTE.c_str());
     sem_unlink(SEMAFORO_SERVIDOR.c_str());
     sem_unlink(SEMAFORO_JUGADA_A.c_str());
