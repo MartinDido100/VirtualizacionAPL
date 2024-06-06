@@ -21,7 +21,7 @@ struct Jugador {
 void inicializar_tableros(char tablero[4][4], char tablero_mostrar[4][4]);
 
 //Envía el tablero que se muestra y status a los jugadores
-void actualizar_y_enviar_tablero(const std::vector<Jugador>& jugadores, char tablero[4][4], const std::string& mensaje_turno);
+void actualizar_y_enviar_tablero(std::vector<Jugador>& jugadores, char tablero[4][4], const std::string& mensaje_turno);
 
 void parse_arguments(int argc, char* argv[], int* puerto, int* max_jugadores);
 
@@ -32,7 +32,7 @@ std::vector<Jugador> iniciar_conexion_clientes(int max_jugadores, int servidor_s
 void mostrar_ayuda();
 
 int main(int argc, char *argv[]) {
-    const std::string SEMAFORO_CLIENTE = "semaforo_clientes";
+    // const std::string SEMAFORO_CLIENTE = "semaforo_clientes";
     int puerto = 27018;
     int max_jugadores = 2;
     std::vector<Jugador> jugadores;
@@ -63,7 +63,7 @@ int main(int argc, char *argv[]) {
 
     while (partida_activa) {
         std::string mensaje_turno = "Servidor: Turno del jugador: " + jugadores[turno].nombre + " con puntaje: " + std::to_string(jugadores[turno].puntaje) + "\n";
-
+        //std::cout<<turno<<" => "<<jugadores[turno].nombre<<" esta "<<jugadores[turno].vivo<<std::endl;
         if(jugadores[turno].vivo) for (int jugadas = 0; jugadas < 2; ++jugadas) {
             
             // Verificar si la conexión con el jugador actual está activa
@@ -96,7 +96,15 @@ int main(int argc, char *argv[]) {
             int bytes_received = recv(jugadores[turno].socket, jugada, sizeof(jugada), 0);
             if (bytes_received <= 0) {
                 std::cout << "Servidor: Jugador desconectado: " << jugadores[turno].nombre << std::endl;
-                partida_activa = false;
+                tablero_mostrar[fila_anterior][col_anterior] = '-';
+                jugadores[turno].vivo = false;
+                vivos--;
+                if(vivos==1){
+                    partida_activa = false;
+                    for(auto & jugador : jugadores)
+                        if(jugador.vivo)
+                            jugador.puntaje += (8 - aciertos);
+                }
                 break;
             }
 
@@ -166,7 +174,7 @@ int main(int argc, char *argv[]) {
         return a.puntaje > b.puntaje;
     });
     
-    std::string mensaje_fin = "Servidor: --- FIN DEL JUEGO ---\n";
+    std::string mensaje_fin = "\n --- FIN DEL JUEGO --- \n";
     mensaje_fin += "Jugador \t\t Puntaje\n";
     for (const auto& jugador : jugadores) {
         if(jugador.vivo == false) continue;
@@ -186,7 +194,7 @@ int main(int argc, char *argv[]) {
     for (const auto& jugador : jugadores) {
         close(jugador.socket);
     }
-    sem_unlink(SEMAFORO_CLIENTE.c_str());
+    // sem_unlink(SEMAFORO_CLIENTE.c_str());
     close(servidor_socket);
 
     return 0;
@@ -206,8 +214,9 @@ void inicializar_tableros(char tablero[4][4], char tablero_mostrar[4][4]) {
     }
 }
 
-void actualizar_y_enviar_tablero(const std::vector<Jugador>& jugadores, char tablero[4][4], const std::string& mensaje_turno) {
-    for (const auto& jugador : jugadores) {
+void actualizar_y_enviar_tablero(std::vector<Jugador>& jugadores, char tablero[4][4], const std::string& mensaje_turno) {
+    for (auto& jugador : jugadores) {
+        if(jugador.vivo == false) continue;
         char msg[17];
         for(int a = 0; a < 4; a++) 
             for(int b = 0; b < 4; b++)
@@ -222,7 +231,8 @@ void actualizar_y_enviar_tablero(const std::vector<Jugador>& jugadores, char tab
 
         if(datosEnviados==-1){
             std::cout << "\033[1;31mError al enviar el tablero al jugador: " << jugador.nombre << "\033[0m" << std::endl;
-            exit(1);
+            jugador.vivo = false;
+        //    exit(1);
         }
         
     }
@@ -230,6 +240,9 @@ void actualizar_y_enviar_tablero(const std::vector<Jugador>& jugadores, char tab
 
 void parse_arguments(int argc, char* argv[], int* puerto, int* max_jugadores) {
     // Parseo de argumentos
+
+    *puerto = -1;
+    *max_jugadores = -1;
     for (int i = 1; i < argc; ++i) {
         if (strcmp(argv[i], "--puerto") == 0 or strcmp(argv[i], "-p") == 0) {
             *puerto = atoi(argv[++i]);
@@ -242,6 +255,16 @@ void parse_arguments(int argc, char* argv[], int* puerto, int* max_jugadores) {
             std::cerr << "Argumento no reconocido: " << argv[i] << std::endl;
             exit(1);
         }
+    }
+
+    if (*puerto == -1 or *max_jugadores == -1) {
+        if(*puerto == -1)
+            std::cerr << "\033[1;31mFalta el puerto\033[0m" << std::endl;
+        if(*max_jugadores == -1)
+            std::cerr << "\033[1;31mFalta la cantidad de jugadores\033[0m" << std::endl;
+        std::cerr << "\033[1;31mUso: " << argv[0] << " --puerto <puerto> --jugadores <cantidad>\033[0m" << std::endl;
+        std::cerr << "\033[1;31mUso: " << argv[0] << " -h or --help para ver la ayuda\033[0m" << std::endl;
+        exit(1);
     }
 }
 

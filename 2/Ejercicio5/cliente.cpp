@@ -12,7 +12,7 @@ void mostrar_ayuda();
 int main(int argc, char *argv[]) {
     string nickname;
     string server_ip;
-    int server_port;
+    int server_port = -1;
 
     for (int i = 1; i < argc; i += 2) {
         string arg = argv[i];
@@ -32,7 +32,15 @@ int main(int argc, char *argv[]) {
     }
 
     if (nickname.empty() || server_ip.empty() || server_port == 0) {
-        cerr << "Usage: " << argv[0] << " -n <nickname> -s <server_ip> -p <server_port>" << endl;
+        if(nickname.empty())
+            cerr << "\033[1;31mNickname no especificado\033[0m" << endl;
+        if(server_ip.empty())
+            cerr << "\033[1;31mDirección IP del servidor no especificada\033[0m" << endl;
+        if(server_port == -1)
+            cerr << "\033[1;31mPuerto del servidor no especificado\033[0m" << endl;
+
+        cerr << "\033[1;31mUso: " << argv[0] << " -n <nickname> -s <server_ip> -p <server_port>\033[0m" << endl;
+        cerr << "\033[1;31mUse -h o --help para obtener más información\033[0m" << endl;
         return 1;
     }
 
@@ -90,7 +98,7 @@ int main(int argc, char *argv[]) {
 
         buffer[bytes_received] = '\0';
 
-        // cout << "\n Acá arranca el buffer -> " << buffer << " <-Este es el buffer" << endl;
+        //cout << "\n Acá arranca el buffer -> " << buffer << " <-Este es el buffer" << endl;
         int esJugada = ((std::string) buffer).find("jugador") == std::string::npos &&
         ((std::string) buffer).find("ACIERTO") == std::string::npos &&
         ((std::string) buffer).find("FALLO") == std::string::npos &&
@@ -144,7 +152,7 @@ void mostrar(char memoria[4][4]){
 }
 
 void mostrar_ayuda(){
-        printf("\n---------------------------------------------------------------------------------------------------------\n");
+    printf("\n---------------------------------------------------------------------------------------------------------\n");
     printf("\t\t\tFuncion de ayuda del ejercicio 5:\n");
     printf("\nIntegrantes:\n\t-MATHIEU ANDRES SANTAMARIA LOIACONO, MARTIN DIDOLICH, FABRICIO MARTINEZ, LAUTARO LASORSA, MARCOS EMIR QUELALI AMISTOY\n");
 
