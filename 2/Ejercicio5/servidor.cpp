@@ -62,7 +62,7 @@ int main(int argc, char *argv[]) {
     int vivos = max_jugadores;
 
     while (partida_activa) {
-        std::string mensaje_turno = "Servidor: Turno del jugador: " + jugadores[turno].nombre + " con puntaje: " + std::to_string(jugadores[turno].puntaje) + "\n";
+        std::string mensaje_turno = "Servidor: \nTurno del jugador: " + jugadores[turno].nombre + " con puntaje: " + std::to_string(jugadores[turno].puntaje) + "\n\0";
         //std::cout<<turno<<" => "<<jugadores[turno].nombre<<" esta "<<jugadores[turno].vivo<<std::endl;
         if(jugadores[turno].vivo) for (int jugadas = 0; jugadas < 2; ++jugadas) {
             
@@ -112,14 +112,14 @@ int main(int argc, char *argv[]) {
             int col = jugada[1];
 
             if (fila < 0 || fila > 3 || col < 0 || col > 3) {
-                const char* mensaje_invalido = "\033[1;31mServidor: Jugada invalida\033[0m\n";
+                const char* mensaje_invalido = "\033[1;31mServidor: Jugada invalida\033[0m\n\0";
                 // sem_wait(semaforo_buffer_disp);
                 send(jugadores[turno].socket, mensaje_invalido, strlen(mensaje_invalido)+1, 0);
                 // sem_post(semaforo_buffer_disp);
                 jugadas--;
                 continue;
             } else if (tablero_mostrar[fila][col] != '-') {
-                const char* mensaje_repetido = "\033[1;31mServidor: Jugada repetida\033[0m\n";
+                const char* mensaje_repetido = "\033[1;31mServidor: Jugada repetida\033[0m\n\0";
                 // sem_wait(semaforo_buffer_disp);
                 send(jugadores[turno].socket, mensaje_repetido, strlen(mensaje_repetido)+1, 0);
                 // sem_post(semaforo_buffer_disp);
@@ -140,7 +140,7 @@ int main(int argc, char *argv[]) {
                     if (tablero[fila][col] == tablero[fila_anterior][col_anterior]) {
                         tablero_mostrar[fila][col] = tablero[fila][col];
                         tablero_mostrar[fila_anterior][col_anterior] = tablero[fila_anterior][col_anterior];
-                        const char* mensaje_acierto = "\033[1;32mServidor:  -- ACIERTO -- \033[0m\n";
+                        const char* mensaje_acierto = "\033[1;32mServidor:  -- ACIERTO -- \033[0m\n\0";
                         jugadores[turno].puntaje+=1;
                         aciertos+=1;
                         // sem_wait(semaforo_buffer_disp);
@@ -153,7 +153,7 @@ int main(int argc, char *argv[]) {
                     } else {
                         tablero_mostrar[fila][col] = '-';
                         tablero_mostrar[fila_anterior][col_anterior] = '-';
-                        const char* mensaje_fallo = "\033[1;31mServidor:  -- FALLO -- \033[0m\n";
+                        const char* mensaje_fallo = "\033[1;31mServidor:  -- FALLO -- \033[0m\n\0";
                         // sem_wait(semaforo_buffer_disp);
                         send(jugadores[turno].socket, mensaje_fallo, strlen(mensaje_fallo)+1, 0);
                         // sem_post(semaforo_buffer_disp);
@@ -168,27 +168,29 @@ int main(int argc, char *argv[]) {
         turno = (turno + 1) % int(jugadores.size());
     }
 
-    actualizar_y_enviar_tablero(jugadores, tablero_mostrar, "Servidor: --- FIN DEL JUEGO ---");
+    actualizar_y_enviar_tablero(jugadores, tablero_mostrar, "Servidor: --- FIN DEL JUEGO ---\0");
     
     std::sort(jugadores.begin(), jugadores.end(), [](const Jugador& a, const Jugador& b) {
         return a.puntaje > b.puntaje;
     });
     
     std::string mensaje_fin = "\n --- FIN DEL JUEGO --- \n";
-    mensaje_fin += "Jugador \t\t Puntaje\n";
+    mensaje_fin += "Jugador"+ std::string(40 - 7,' ') +"Puntaje\n";
     for (const auto& jugador : jugadores) {
         if(jugador.vivo == false) continue;
     //    std::string msg = "Servidor: Tu puntaje: " + jugador.puntaje;
         auto msg = mensaje_fin;
         for(const auto & jjugador : jugadores){
             if(jjugador.nombre == jugador.nombre){
-                msg += "\033[1m" + jugador.nombre + "\t\t" + std::to_string(jugador.puntaje) + "\n\033[0m";
+                msg += "\033[1m" + jugador.nombre + std::string(std::max(0,40-int(jugador.nombre.size())),' ') + std::to_string(jugador.puntaje) + "\n\033[0m";
             }else{
-                msg += jjugador.nombre + "\t\t" + std::to_string(jjugador.puntaje) + "\n";
+                msg += jjugador.nombre + std::string(std::max(0,40-int(jugador.nombre.size())), ' ') + std::to_string(jjugador.puntaje) + "\n";
             
             }
         }
+        msg += '\0';
         send(jugador.socket, msg.c_str(), msg.size(), 0);
+
     }
     // Cerrar los sockets
     for (const auto& jugador : jugadores) {
@@ -205,6 +207,7 @@ int main(int argc, char *argv[]) {
 void inicializar_tableros(char tablero[4][4], char tablero_mostrar[4][4]) {
     memset(tablero_mostrar, '-', 16);
     std::vector<char> letras = {'A', 'A', 'B', 'B', 'C', 'C', 'D', 'D', 'E', 'E', 'F', 'F', 'G', 'G', 'H', 'H'};
+    std::srand(time(0));
     std::random_shuffle(letras.begin(), letras.end());
     int idx = 0;
     for (int i = 0; i < 4; ++i) {
@@ -227,14 +230,16 @@ void actualizar_y_enviar_tablero(std::vector<Jugador>& jugadores, char tablero[4
             std::cout << "\033[1;31mError al enviar el tablero al jugador: " << jugador.nombre << "\033[0m" << std::endl;
             exit(1);
         }
-        datosEnviados=send(jugador.socket, mensaje_turno.c_str(), mensaje_turno.size(), 0);
+        if(strlen(mensaje_turno.c_str()))
+        {
+            datosEnviados=send(jugador.socket, mensaje_turno.c_str(), strlen(mensaje_turno.c_str())+1, 0);
 
-        if(datosEnviados==-1){
-            std::cout << "\033[1;31mError al enviar el tablero al jugador: " << jugador.nombre << "\033[0m" << std::endl;
-            jugador.vivo = false;
-        //    exit(1);
+            if(datosEnviados==-1){
+                std::cout << "\033[1;31mError al enviar el tablero al jugador: " << jugador.nombre << "\033[0m" << std::endl;
+                jugador.vivo = false;
+            //    exit(1);
+            }
         }
-        
     }
 }
 

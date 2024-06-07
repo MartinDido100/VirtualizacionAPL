@@ -8,12 +8,13 @@ using namespace std;
 
 void mostrar(char memoria[4][4]);
 void mostrar_ayuda();
+void check_connection(int sock);
 
 int main(int argc, char *argv[]) {
     string nickname;
     string server_ip;
     int server_port = -1;
-
+    
     for (int i = 1; i < argc; i += 2) {
         string arg = argv[i];
         if (arg == "-n" || arg == "--nickname") {
@@ -82,21 +83,41 @@ int main(int argc, char *argv[]) {
         }
 
         // Recibir actualización del tablero
-        int bytes_received = recv(sock, buffer, sizeof(buffer), 0);
-        
-        if(((std::string) buffer).find("--- FIN DEL JUEGO ---") != std::string::npos){
-            cout<<buffer<<endl;
-            jugando = false;
-            break;
+        int bytes_received = 0;
+        {
+            int i = 0;
+            while((bytes_received = recv(sock, buffer+i, 1, MSG_DONTWAIT))){
+                if(bytes_received == -1){
+                //    cerr << "\033[1;31mSe perdió conexión con el servidor\033[0m" << endl;
+                    break;
+                }
+                if(buffer[i] == '\0'){
+                    break;
+                }
+            //    cout<<" Leo caracter "<<buffer[i]<<endl;
+                i++;
+            }
+            // cout<<(std::string)buffer<<endl;
+            bytes_received = i;
         }
-        
+
+        if(bytes_received == 0){
+            continue;
+        }
+
         // std::cout << "Se recibieron en total: " << bytes_received << std::endl;
-        if (bytes_received <= 0) {
+        if (bytes_received < 0) {
             cerr << "\033[1;31mSe perdió conexión con el servidor\033[0m" << endl;
             break;
         }
 
         buffer[bytes_received] = '\0';
+
+        if(((std::string) buffer).find("FIN") != std::string::npos){
+            jugando = false;
+            std::cout << buffer << std::endl;
+            break;
+        }
 
         //cout << "\n Acá arranca el buffer -> " << buffer << " <-Este es el buffer" << endl;
         int esJugada = ((std::string) buffer).find("jugador") == std::string::npos &&
@@ -127,6 +148,11 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    char next_char;
+    while(recv(sock, &next_char, 1, MSG_DONTWAIT) > 0){
+        cout << next_char;
+    }
+    cout<<endl;
     cout << "Juego Finalizado" << endl;
 
     close(sock);
@@ -186,3 +212,4 @@ void mostrar_ayuda(){
     printf("\nSe llevara un marcador indicando cuantos aciertos realizó cada jugador y al final mostrara el ganador.\n");
 
 }
+
