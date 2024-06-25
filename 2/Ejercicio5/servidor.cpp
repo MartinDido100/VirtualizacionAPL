@@ -143,7 +143,9 @@ void help(){
     printf("\n\t$sudo apt install build-essential\n");
     printf("\nPara compilar los makefile ejecutar el siguiente comando:\n");
     printf("\n\t$make all\n");
-
+    printf("\nPara borrar los makefile ejecutar el siguiente comando:\n");
+    printf("\n\t$make clean\n");
+    
     printf("\nDescripcion:");
     printf("\n\tEl siguiente programa ejecuta el juego de la memoria Memotest, pero alfabetico \n\n");
     printf("\nEl programa se implementa a travez de de conexiones de red, pudiendo admitir más de un cliente por servidor.");
