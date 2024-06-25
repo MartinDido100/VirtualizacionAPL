@@ -118,7 +118,7 @@ int main( int argc, char *argv[]){
 void help(){
     printf("\n---------------------------------------------------------------------------------------------------------\n");
     printf("\t\t\tFuncion de ayuda del ejercicio 4:\n");
-    printf("\nIntegrantes:\n\t-MATHIEU ANDRES SANTAMARIA LOIACONO, MARTIN DIDOLICH, FABRICIO MARTINEZ, LAUTARO LASORSA, MARCOS EMIR AMISTOY QUELALI\n");
+    printf("\nIntegrantes:\n\t-MATHIEU ANDRES SANTAMARIA LOIACONO, MARTIN DIDOLICH, FABRICIO MARTINEZ, LAUTARO LASORSA, MARCOS EMIR QUELALI AMISTOY\n");
 
     printf("\nPara preparar el entorno de desarrollo ejecutar el siguiente comando:\n");
     printf("\n\t$sudo apt install build-essential\n");
@@ -126,7 +126,7 @@ void help(){
     printf("\n\t$make all\n");
 
     printf("\nDescripcion:");
-    printf("\n\tEl siguiente programa ejecuta el juego de la memoria "Memotest", pero alfabetico \n\n");
+    printf("\n\tEl siguiente programa ejecuta el juego de la memoria \"Memotest\", pero alfabetico \n\n");
     printf("\n\tExistira un proceso “Cliente”, cuya tarea será mostrar por pantalla el estado actual del tablero y leer \n");
     printf("\t\tdesde teclado el par de casillas que el usuario quiere destapar\n\n");
     printf("\n\tExistira un proceso “Servidor”, que será el encargado de actualizar el estado del tablero en base al  \n");
@@ -136,9 +136,7 @@ void help(){
     printf("\t\tSe debe garantizar que no se pueda ejecutar más de un cliente a la vez conectado al mismo servidor. \n\n");
     printf("\t\tSe deberá garantizar que solo pueda haber un servidor por computadora. \n\n");
     printf("\t\tEl tablero tendrá 16 casillas (4 filas x 4 columnas). \n\n");
-    printf("\t\tCada vez que se genere una nueva partida, el servidor deberá rellenar de manera aleatoria el tablero
-          con 8 pares de letras mayúsculas (A-Z). Cada letra seleccionada solo deberá aparecer dos veces en
-          posiciones también aleatorias. \n\n");
+    printf("\t\tCada vez que se genere una nueva partida, el servidor deberá rellenar de manera aleatoria el tablero  con 8 pares de letras mayúsculas (A-Z). Cada letra seleccionada solo deberá aparecer dos veces en posiciones también aleatorias. \n\n");
     printf("\t\tEl servidor se ejecutará y quedará a la espera de que un cliente se ejecute. \n\n");
     printf("\t\tTanto el cliente como el servidor deberán ignorar la señal SIGINT (Ctrl-C). \n\n");
     printf("\t\tEl servidor deberá finalizar al recibir una señal SIGUSR1, siempre y cuando no haya ninguna partida en progreso. \n\n");
@@ -165,15 +163,15 @@ void help(){
     return;
 }
 
-void mostrar(char memoria[4][4]){
+void mostrar(char tablero[4][4]){
     cout << "\t0\t1\t2\t3" << endl;
     for(int i = 0; i < 4; i++){
         cout << i << "\t";
         for(int j = 0; j < 4; j++){
-            if(memoria[i][j] >= 'A' and memoria[i][j] <= 'Z'){
-                cout << "\033[1;32m" << memoria[i][j] << "\033[0m\t";
-            }else if(memoria[i][j] >= -'Z' and memoria[i][j] <= -'A'){
-                cout << "\033[1;33m" << char(-memoria[i][j]) << "\033[0m\t";
+            if(tablero[i][j] >= 'A' and tablero[i][j] <= 'Z'){
+                cout << "\033[1;32m" << tablero[i][j] << "\033[0m\t";
+            }else if(tablero[i][j] >= -'Z' and tablero[i][j] <= -'A'){
+                cout << "\033[1;33m" << char(-tablero[i][j]) << "\033[0m\t";
             }else{
                 cout<<"-\t";
             }

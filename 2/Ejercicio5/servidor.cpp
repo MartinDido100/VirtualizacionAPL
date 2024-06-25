@@ -1,143 +1,343 @@
-#include <bits/stdc++.h>
-#include <stdio.h>
+#include <iostream>
+#include <vector>
+#include <cstring>
 #include <unistd.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
 #include <sys/socket.h>
-#include <sys/types.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <netdb.h>
-#include "config.hpp"
-using namespace std;
+#include <algorithm>
+#include <netinet/tcp.h>
+#include <semaphore.h>
+#include <fcntl.h>
 
-
-
-void help();
-void inicializar(char * memoria);
-void muerte_ordenada(int sig);
-
-struct elemento{
-    pair<sockaddr, jugador> datos_jugador;
+struct Jugador {
     int socket;
+    std::string nombre;
+    int puntaje;
     bool vivo;
 };
 
-int main( int argc, char *argv[]){
+// Inicializa el tablero oculto del juego con pares de letras
+void inicializar_tableros(char tablero[4][4], char tablero_mostrar[4][4]);
+
+//Envía el tablero que se muestra y status a los jugadores
+void actualizar_y_enviar_tablero(std::vector<Jugador>& jugadores, char tablero[4][4], const std::string& mensaje_turno);
+
+void parse_arguments(int argc, char* argv[], int* puerto, int* max_jugadores);
+
+void crear_conexion(int* servidor_socket, int max_jugadores, int puerto);
+
+std::vector<Jugador> iniciar_conexion_clientes(int max_jugadores, int servidor_socket);
+
+void mostrar_ayuda();
+
+int main(int argc, char *argv[]) {
+    // const std::string SEMAFORO_CLIENTE = "semaforo_clientes";
+    int puerto = 27018;
+    int max_jugadores = 2;
+    std::vector<Jugador> jugadores;
+    int servidor_socket;
+    char tablero[4][4];
+    char tablero_mostrar[4][4];
+    int aciertos=0;
+
+    // Inicializar el tablero de juego
+    inicializar_tableros(tablero, tablero_mostrar);
+
+    parse_arguments(argc, argv, &puerto, &max_jugadores);
+
+    crear_conexion(&servidor_socket, max_jugadores, puerto);
+
+    std::cout << "Esperando a que se conecten todos los jugadores..." << std::endl;
+
+    jugadores=iniciar_conexion_clientes(max_jugadores, servidor_socket);
+
+    std::cout << "Inicia la partida!" << std::endl;
+
+    // Lógica del juego
+    int turno = 0;
+    bool partida_activa = true;
+    char jugada[2];
+    int fila_anterior, col_anterior;
+    int vivos = max_jugadores;
+
+    while (partida_activa) {
+        std::string mensaje_turno = "Servidor: \nTurno del jugador: " + jugadores[turno].nombre + " con puntaje: " + std::to_string(jugadores[turno].puntaje) + "\n\0";
+        //std::cout<<turno<<" => "<<jugadores[turno].nombre<<" esta "<<jugadores[turno].vivo<<std::endl;
+        if(jugadores[turno].vivo) for (int jugadas = 0; jugadas < 2; ++jugadas) {
+            
+            // Verificar si la conexión con el jugador actual está activa
+            int error = 0;
+            socklen_t len = sizeof(error);
+            getsockopt(jugadores[turno].socket, SOL_SOCKET, SO_ERROR, &error, &len);
+            if (error != 0) {
+                std::cout << "Servidor: Error en la conexión con el jugador: " << jugadores[turno].nombre << std::endl;
+                tablero_mostrar[fila_anterior][col_anterior] = '-';
+                jugadores[turno].vivo = false;
+                vivos--;
+                if(vivos==1){
+                    partida_activa = false;
+                    for(auto & jugador : jugadores)
+                        if(jugador.vivo)
+                            jugador.puntaje += (8 - aciertos);
+                }
+                break;
+            }
+            
+            std::cout << "Servidor: Esperando jugadada del jugador: " << jugadores[turno].nombre << "\n" << std::endl;
+
+            // Enviar mensaje indicando que es el turno del jugador actual
+            actualizar_y_enviar_tablero(jugadores, tablero_mostrar, mensaje_turno);
+            const char* mensaje_tu_turno = "Servidor: Es tu turno";
+            // sem_wait(semaforo_buffer_disp);
+            send(jugadores[turno].socket, mensaje_tu_turno, strlen(mensaje_tu_turno)+1, 0);
+            // sem_post(semaforo_buffer_disp);
+
+            int bytes_received = recv(jugadores[turno].socket, jugada, sizeof(jugada), 0);
+            if (bytes_received <= 0) {
+                std::cout << "Servidor: Jugador desconectado: " << jugadores[turno].nombre << std::endl;
+                tablero_mostrar[fila_anterior][col_anterior] = '-';
+                jugadores[turno].vivo = false;
+                vivos--;
+                if(vivos==1){
+                    partida_activa = false;
+                    for(auto & jugador : jugadores)
+                        if(jugador.vivo)
+                            jugador.puntaje += (8 - aciertos);
+                }
+                break;
+            }
+
+            int fila = jugada[0];
+            int col = jugada[1];
+
+            if (fila < 0 || fila > 3 || col < 0 || col > 3) {
+                const char* mensaje_invalido = "\033[1;31mServidor: Jugada invalida\033[0m\n\0";
+                // sem_wait(semaforo_buffer_disp);
+                send(jugadores[turno].socket, mensaje_invalido, strlen(mensaje_invalido)+1, 0);
+                // sem_post(semaforo_buffer_disp);
+                jugadas--;
+                continue;
+            } else if (tablero_mostrar[fila][col] != '-') {
+                const char* mensaje_repetido = "\033[1;31mServidor: Jugada repetida\033[0m\n\0";
+                // sem_wait(semaforo_buffer_disp);
+                send(jugadores[turno].socket, mensaje_repetido, strlen(mensaje_repetido)+1, 0);
+                // sem_post(semaforo_buffer_disp);
+                jugadas--;
+                continue;
+            } else {
+
+                std::cout << "Se jugó la coordenada: " << fila << "-" << col << std::endl;
+                std::cout << "Se jugó la letra: " << tablero[fila][col] << std::endl;
+                tablero_mostrar[fila][col] = - tablero[fila][col];
+                if(jugadas == 0) {
+                    fila_anterior = jugada[0];
+                    col_anterior = jugada[1];
+                }
+
+                if (jugadas == 1) {
+                    actualizar_y_enviar_tablero(jugadores, tablero_mostrar, "");
+                    if (tablero[fila][col] == tablero[fila_anterior][col_anterior]) {
+                        tablero_mostrar[fila][col] = tablero[fila][col];
+                        tablero_mostrar[fila_anterior][col_anterior] = tablero[fila_anterior][col_anterior];
+                        const char* mensaje_acierto = "\033[1;32mServidor:  -- ACIERTO -- \033[0m\n\0";
+                        jugadores[turno].puntaje+=1;
+                        aciertos+=1;
+                        // sem_wait(semaforo_buffer_disp);
+                        send(jugadores[turno].socket, mensaje_acierto, strlen(mensaje_acierto)+1, 0);
+
+                        if(aciertos>=8) {
+                            partida_activa = false;
+                        }
+                        // sem_post(semaforo_buffer_disp);
+                    } else {
+                        tablero_mostrar[fila][col] = '-';
+                        tablero_mostrar[fila_anterior][col_anterior] = '-';
+                        const char* mensaje_fallo = "\033[1;31mServidor:  -- FALLO -- \033[0m\n\0";
+                        // sem_wait(semaforo_buffer_disp);
+                        send(jugadores[turno].socket, mensaje_fallo, strlen(mensaje_fallo)+1, 0);
+                        // sem_post(semaforo_buffer_disp);
+                    }
+                    fila_anterior = -1;
+                    col_anterior = -1;
+                    
+                }
+            }
+        }
+        // Cambiar de turno
+        turno = (turno + 1) % int(jugadores.size());
+    }
+
+    actualizar_y_enviar_tablero(jugadores, tablero_mostrar, "Servidor: --- FIN DEL JUEGO ---\0");
     
-    if(argc==2 and ( strcmp(argv[1],"-h")==0 or strcmp(argv[1],"--help")==0)){
-        help();
-        return 0;
-    }
-
-    int num_puerto = -1;
-    int num_jugadores = -1;
-
-    for(int i = 1;i<argc-1;i+=2){
-        if(strcmp(argv[i],"-p")==0 or strcmp(argv[i],"--puerto")==0){
-            try{
-                num_puerto = atoi(argv[i+1]);
-                if(num_puerto<0){
-                    throw invalid_argument("Numero de puerto invalido");
-                }
-            }catch(exception e){
-                cerr << "\033[1;31mERROR : Argumento -p/--puerto invalido\033[0m" << endl;
-                cout<<e.what()<<endl;
-            }
-        }else if(strcmp(argv[i],"-j")==0 or strcmp(argv[i],"--jugadores")==0){
-            try{
-                num_jugadores = atoi(argv[i+1]);
-                if(num_jugadores<=0){
-                    throw invalid_argument("Numero de jugadores invalido");
-                }
-            }catch(exception e){
-                cerr << "\033[1;31mERROR : Argumento -j/--jugadores invalido\033[0m" << endl;
-                cout<<e.what()<<endl;
-            }
-        }else{
-            cerr << "\033[1;31mERROR : Argumento "<<argv[i]<<" no existe \033[0m" << endl;
-        }
-    }
-
-    if(num_puerto <= -1){
-        cerr << "\033[1;31mERROR : Falta el argumento -p/--puerto\033[0m" << endl;
-    }
-
-    if(num_jugadores <= 0){
-        cerr << "\033[1;31mERROR : Falta el argumento -j/--jugadores\033[0m" << endl;
-    }
-
-    if(num_puerto <= -1 or num_jugadores <= -1){
-        cerr << "\033[1;31mERROR : Faltan argumentos\033[0m" << endl;
-        return 1;
-    }
-
-    signal(SIGINT, SIG_IGN);
-    // signal(SIGUSR1, muerte_ordenada);
-    signal(SIGTERM, SIG_IGN);
-    signal(SIGHUP, SIG_IGN);
-    signal(SIGQUIT, SIG_IGN);
-
-
-
-    char interno[16];
-    bool hay_juego = false;
-
-    sockaddr_in server_config;
-    memset(&server_config, '0', sizeof(server_config));
-    server_config.sin_family = AF_INET;
-    server_config.sin_addr.s_addr = htonl(INADDR_ANY);
-    server_config.sin_port = htons(num_puerto);
-
-    int socketEscucha = socket(AF_INET, SOCK_STREAM, 0);
-    bind(socketEscucha, (sockaddr *)&server_config, sizeof(server_config));
-    while(true){
-        cout << "\033[1;33m ESPERANDO JUGADORES \033[0m" << endl;
-        listen(socketEscucha, num_jugadores);
-        vector<elemento> jugadores;
-        while(jugadores.size() < num_jugadores){
-            int socketComunicacion = accept(socketEscucha, (sockaddr * )NULL, NULL);
-            pair<sockaddr, jugador> p;
-            int val_leidos = read(socketComunicacion, &p, sizeof(p));
-            if(val_leidos == sizeof(p)){
-                jugadores.push_back({p, socketComunicacion, true});
-                cout<<"Ya hay "<<jugadores.size()<<" / "<<num_jugadores<<" jugadores "<<endl;
+    std::sort(jugadores.begin(), jugadores.end(), [](const Jugador& a, const Jugador& b) {
+        return a.puntaje > b.puntaje;
+    });
+    
+    std::string mensaje_fin = "\n --- FIN DEL JUEGO --- \n";
+    mensaje_fin += "Jugador"+ std::string(40 - 7,' ') +"Puntaje\n";
+    for (const auto& jugador : jugadores) {
+        if(jugador.vivo == false) continue;
+    //    std::string msg = "Servidor: Tu puntaje: " + jugador.puntaje;
+        auto msg = mensaje_fin;
+        for(const auto & jjugador : jugadores){
+            if(jjugador.nombre == jugador.nombre){
+                msg += "\033[1m" + jugador.nombre + std::string(std::max(0,40-int(jugador.nombre.size())),' ') + std::to_string(jugador.puntaje) + "\n\033[0m";
+            }else{
+                msg += jjugador.nombre + std::string(std::max(0,40-int(jugador.nombre.size())), ' ') + std::to_string(jjugador.puntaje) + "\n";
+            
             }
         }
+        msg += '\0';
+        send(jugador.socket, msg.c_str(), msg.size(), 0);
 
-        cout<<" INICIA LA SALA "<<endl;
-        int aciertos_totales = 0;
-        int jugadores_vivos = num_jugadores;
-        char oculto[16];
-        char mostrar[16];
-        inicializar(oculto);
-        int jugador_i = -1;
-        while(aciertos_totales<8 and jugadores_vivos>1){
-            for(int i = 0; i < num_jugadores; i++){
-                if(jugadores[i].vivo){
-                    char estado = char(-1?i!=jugador_i:1);
-                    write(jugadores[i].socket,&estado,1);
-                    write(jugadores[i].socket, mostrar, 16);
-                }
-            }
+    }
+    // Cerrar los sockets
+    for (const auto& jugador : jugadores) {
+        close(jugador.socket);
+    }
+    // sem_unlink(SEMAFORO_CLIENTE.c_str());
+    close(servidor_socket);
 
-            int jugada[4];
-            read(jugadores[jugador_i].socket,jugada,sizeof(jugada));
-            
-            
-            jugador_i = (jugador_i+1)%num_jugadores;
-            while(!jugadores[jugador_i].vivo){
-                jugador_i = (jugador_i+1)%num_jugadores; 
+    return 0;
+}
+
+
+// Inicializa el tablero de juego con pares de letras
+void inicializar_tableros(char tablero[4][4], char tablero_mostrar[4][4]) {
+    memset(tablero_mostrar, '-', 16);
+    std::vector<char> letras = {'A', 'A', 'B', 'B', 'C', 'C', 'D', 'D', 'E', 'E', 'F', 'F', 'G', 'G', 'H', 'H'};
+    std::srand(time(0));
+    std::random_shuffle(letras.begin(), letras.end());
+    int idx = 0;
+    for (int i = 0; i < 4; ++i) {
+        for (int j = 0; j < 4; ++j) {
+            tablero[i][j] = letras[idx++];
+        }
+    }
+}
+
+void actualizar_y_enviar_tablero(std::vector<Jugador>& jugadores, char tablero[4][4], const std::string& mensaje_turno) {
+    for (auto& jugador : jugadores) {
+        if(jugador.vivo == false) continue;
+        char msg[17];
+        for(int a = 0; a < 4; a++) 
+            for(int b = 0; b < 4; b++)
+                msg[a*4+b] = tablero[a][b];
+        msg[16] = '\0';
+        int datosEnviados=send(jugador.socket, msg, sizeof(msg), 0);
+        if(datosEnviados==-1){
+            std::cout << "\033[1;31mError al enviar el tablero al jugador: " << jugador.nombre << "\033[0m" << std::endl;
+            exit(1);
+        }
+        if(strlen(mensaje_turno.c_str()))
+        {
+            datosEnviados=send(jugador.socket, mensaje_turno.c_str(), strlen(mensaje_turno.c_str())+1, 0);
+
+            if(datosEnviados==-1){
+                std::cout << "\033[1;31mError al enviar el tablero al jugador: " << jugador.nombre << "\033[0m" << std::endl;
+                jugador.vivo = false;
+            //    exit(1);
             }
         }
     }
 }
 
-void help(){
+void parse_arguments(int argc, char* argv[], int* puerto, int* max_jugadores) {
+    // Parseo de argumentos
+
+    *puerto = -1;
+    *max_jugadores = -1;
+    for (int i = 1; i < argc; ++i) {
+        if (strcmp(argv[i], "--puerto") == 0 or strcmp(argv[i], "-p") == 0) {
+            *puerto = atoi(argv[++i]);
+        } else if (strcmp(argv[i], "--jugadores") == 0 or strcmp(argv[i], "-j") == 0) {
+            *max_jugadores = atoi(argv[++i]);
+        } else if(strcmp(argv[i], "--help") == 0 or strcmp(argv[i], "-h") == 0) {
+            mostrar_ayuda();
+            exit(0);
+        } else {
+            std::cerr << "Argumento no reconocido: " << argv[i] << std::endl;
+            exit(1);
+        }
+    }
+
+    if (*puerto == -1 or *max_jugadores == -1) {
+        if(*puerto == -1)
+            std::cerr << "\033[1;31mFalta el puerto\033[0m" << std::endl;
+        if(*max_jugadores == -1)
+            std::cerr << "\033[1;31mFalta la cantidad de jugadores\033[0m" << std::endl;
+        std::cerr << "\033[1;31mUso: " << argv[0] << " --puerto <puerto> --jugadores <cantidad>\033[0m" << std::endl;
+        std::cerr << "\033[1;31mUso: " << argv[0] << " -h or --help para ver la ayuda\033[0m" << std::endl;
+        exit(1);
+    }
+}
+
+void crear_conexion(int* servidor_socket, int max_jugadores, int puerto) {
+    struct sockaddr_in servidor_addr;
+
+    // Crear socket
+    *servidor_socket = socket(AF_INET, SOCK_STREAM, 0);
+    if (*servidor_socket < 0) {
+        perror("Error al crear el socket");
+        exit(1);
+    }
+
+    // Configurar TCP_NODELAY
+    int flag = 1;
+    if (setsockopt(*servidor_socket, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(int)) < 0) {
+        perror("setsockopt");
+        exit(1);
+    }
+
+    // Configurar la dirección del servidor
+    memset(&servidor_addr, 0, sizeof(servidor_addr));
+    servidor_addr.sin_family = AF_INET;
+    servidor_addr.sin_addr.s_addr = INADDR_ANY;
+    servidor_addr.sin_port = htons(puerto);
+
+    // Enlazar el socket
+    if (bind(*servidor_socket, (struct sockaddr*)&servidor_addr, sizeof(servidor_addr)) < 0) {
+        perror("Error al enlazar el socket");
+        exit(1);
+    }
+
+    // Escuchar
+    if (listen(*servidor_socket, max_jugadores) < 0) {
+        perror("Error al escuchar en el socket");
+        exit(1);
+    }
+}
+
+std::vector<Jugador> iniciar_conexion_clientes(int max_jugadores, int servidor_socket) {
+    std::vector<Jugador> jugadores;
+    int cliente_socket;
+    struct sockaddr_in cliente_addr;
+    socklen_t cliente_len = sizeof(cliente_addr);
+    // Aceptar conexiones de jugadores
+    while ((int) jugadores.size() < max_jugadores) {
+        cliente_socket = accept(servidor_socket, (struct sockaddr*)&cliente_addr, &cliente_len);
+        if (cliente_socket < 0) {
+            perror("Error al aceptar la conexión");
+            continue;
+        }
+
+        char buffer[256];
+        memset(buffer, 0, sizeof(buffer));
+        int bytes_received = recv(cliente_socket, buffer, sizeof(buffer), 0);
+        if (bytes_received > 0) {
+            buffer[bytes_received] = '\0';
+            jugadores.push_back({cliente_socket, buffer, 0, true});
+            std::cout << "Jugador conectado (" << jugadores.size() << "/" << max_jugadores <<"): " << buffer << std::endl;
+        }
+    }
+    return jugadores;
+}
+
+void mostrar_ayuda(){
     printf("\n---------------------------------------------------------------------------------------------------------\n");
     printf("\t\t\tFuncion de ayuda del ejercicio 5:\n");
-    printf("\nIntegrantes:\n\t-MATHIEU ANDRES SANTAMARIA LOIACONO, MARTIN DIDOLICH, FABRICIO MARTINEZ, LAUTARO LASORSA, MARCOS EMIR AMISTOY QUELALI\n");
+    printf("\nIntegrantes:\n\t-MATHIEU ANDRES SANTAMARIA LOIACONO, MARTIN DIDOLICH, FABRICIO MARTINEZ, LAUTARO LASORSA, MARCOS EMIR QUELALI AMISTOY\n");
 
     printf("\nPara preparar el entorno de desarrollo ejecutar el siguiente comando:\n");
     printf("\n\t$sudo apt install build-essential\n");
@@ -169,27 +369,3 @@ void help(){
     printf("\n3. Los clientes pueden ver el estado actualizado del tablero cuando ocurran aciertos y solo se permitirá una jugada por turno de cada cliente\n");
     printf("\nSe llevara un marcador indicando cuantos aciertos realizó cada jugador y al final mostrara el ganador.\n");
 }
-
-void inicializar(char * memoria){
-    srand(time(0));
-    vector<int> posiciones(16);
-    for(int pos = 0; pos < 16; pos ++ ){
-        posiciones[pos] = pos;
-    }
-
-    string letras;
-    
-    for(char c = 'A'; c <= 'Z'; c++){
-        letras.push_back(c);
-    }
-    
-    random_shuffle(letras.begin(), letras.end());
-    random_shuffle(posiciones.begin(), posiciones.end());
-    
-    for(int letra = 0; letra<8;letra++){
-        char cletra = letras[letra];
-        memoria[posiciones[2*letra]] = cletra;
-        memoria[posiciones[2*letra+1]] = cletra;
-    }
-}
-
