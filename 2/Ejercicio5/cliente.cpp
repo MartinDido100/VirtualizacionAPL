@@ -236,6 +236,8 @@ void mostrar_ayuda(){
     printf("\nPor ejemplo si se ingresa: aaa 0odgsaod92 se leeran las coordenadas 0 2");
 
     printf("\nAclaraciones\n");
+    printf("\nAl cerrar la consola no se detendra ninguno de los procesos en ejecucion sea servidor o cliente, la forma de desconectar\n");
+    printf("\nal cliente o servidor es con CTRL+C o enviando una señal SIGUSR1 al proceso\n");
     printf("\n\tEl juego de la memoria Memotest consiste en encontrar las parejas de letras en el menor tiempo posible.");
     printf("\n\tEl juego finaliza cuando se encuentran todas las parejas.");
     printf("\n1. Si el servidor se cae (deja de funcionar) o es detenido, los clientes deben seran notificados y se cerrara de forma controlada.\n");
