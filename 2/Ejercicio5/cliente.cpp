@@ -11,6 +11,14 @@ void mostrar(char memoria[4][4]);
 void mostrar_ayuda();
 int get_next_int();
 bool is_socket_open(int socket_fd);
+int sock;
+
+void muerte_ordenada(int sig){
+    cout<<"Cerrando con signal "<<sig<<endl;
+    close(sock);
+    exit(sig);
+}
+
 int main(int argc, char *argv[]) {
     string nickname;
     string server_ip;
@@ -48,11 +56,19 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    int sock = socket(AF_INET, SOCK_STREAM, 0);
+
+
+    sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock < 0) {
         perror("socket");
         return 1;
     }
+    
+    signal(SIGINT, muerte_ordenada);
+    signal(SIGTERM, muerte_ordenada);
+    signal(SIGHUP, muerte_ordenada);
+    signal(SIGQUIT, muerte_ordenada);
+
 
     sockaddr_in server_addr;
     memset(&server_addr, 0, sizeof(server_addr));

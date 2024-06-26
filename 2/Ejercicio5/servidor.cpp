@@ -22,7 +22,7 @@ struct Jugador {
 void inicializar_tableros(char tablero[4][4], char tablero_mostrar[4][4]);
 
 //Envía el tablero que se muestra y status a los jugadores
-void actualizar_y_enviar_tablero(std::vector<Jugador>& jugadores, char tablero[4][4], const std::string& mensaje_turno);
+int actualizar_y_enviar_tablero(std::vector<Jugador>& jugadores, char tablero[4][4], const std::string& mensaje_turno);
 
 void parse_arguments(int argc, char* argv[], int* puerto, int* max_jugadores);
 
@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
     signal(SIGTERM, muerte_ordenada);
     signal(SIGHUP, muerte_ordenada);
     signal(SIGQUIT, muerte_ordenada);
-
+    signal(SIGPIPE, SIG_IGN);
 
 
     std::cout << "Esperando a que se conecten todos los jugadores..." << std::endl;
@@ -86,7 +86,11 @@ int main(int argc, char *argv[]) {
     while (partida_activa) {
         std::string mensaje_turno = "Servidor: \nTurno del jugador: " + jugadores[turno].nombre + " con puntaje: " + std::to_string(jugadores[turno].puntaje) + "\n\0";
         if(jugadores[turno].vivo) for (int jugadas = 0; jugadas < 2; ++jugadas) {
-            
+            std::cout<<std::endl;
+            if(jugadores[turno].vivo == false){
+                tablero_mostrar[fila_anterior][col_anterior] = '-';
+                break;
+            }
             // Verificar si la conexión con el jugador actual está activa
             int error = 0;
             socklen_t len = sizeof(error);
@@ -108,7 +112,21 @@ int main(int argc, char *argv[]) {
             std::cout << "Servidor: Esperando jugadada del jugador: " << jugadores[turno].nombre << "\n" << std::endl;
 
             // Enviar mensaje indicando que es el turno del jugador actual
-            actualizar_y_enviar_tablero(jugadores, tablero_mostrar, mensaje_turno);
+            int mueren = actualizar_y_enviar_tablero(jugadores, tablero_mostrar, mensaje_turno);
+            if(mueren>0){
+                vivos -= mueren;
+                if(vivos<=1){
+                    partida_activa = false;
+                    for(auto & jugador : jugadores)
+                        if(jugador.vivo)
+                            jugador.puntaje += (8 - aciertos);
+                    break;
+                }
+                if(jugadores[turno].vivo == false){
+                    tablero_mostrar[fila_anterior][col_anterior] = '-';
+                    break;
+                }
+            }
             const char* mensaje_tu_turno = "Servidor: Es tu turno";
             // sem_wait(semaforo_buffer_disp);
             send(jugadores[turno].socket, mensaje_tu_turno, strlen(mensaje_tu_turno)+1, 0);
@@ -118,8 +136,9 @@ int main(int argc, char *argv[]) {
             if (bytes_received <= 0) {
                 std::cout << "Servidor: Jugador desconectado: " << jugadores[turno].nombre << std::endl;
                 tablero_mostrar[fila_anterior][col_anterior] = '-';
-                jugadores[turno].vivo = false;
+                jugadores[turno].vivo = false;                
                 vivos--;
+                std::cout<<"Quedan "<<vivos<<" jugadores"<<std::endl;
                 if(vivos<=1){
                     partida_activa = false;
                     for(auto & jugador : jugadores)
@@ -128,7 +147,7 @@ int main(int argc, char *argv[]) {
                 }
                 break;
             }
-
+            
             int fila = jugada[0];
             int col = jugada[1];
 
@@ -157,7 +176,19 @@ int main(int argc, char *argv[]) {
                 }
 
                 if (jugadas == 1) {
-                    actualizar_y_enviar_tablero(jugadores, tablero_mostrar, "");
+                    mueren = actualizar_y_enviar_tablero(jugadores, tablero_mostrar, "");
+                    
+                    if(mueren>0){
+                        vivos -= mueren;
+                        if(vivos<=1){
+                            partida_activa = false;
+                            for(auto & jugador : jugadores)
+                                if(jugador.vivo)
+                                    jugador.puntaje += (8 - aciertos);
+                            break;
+                        }
+                    }
+                    
                     if (tablero[fila][col] == tablero[fila_anterior][col_anterior]) {
                         tablero_mostrar[fila][col] = tablero[fila][col];
                         tablero_mostrar[fila_anterior][col_anterior] = tablero[fila_anterior][col_anterior];
@@ -238,7 +269,8 @@ void inicializar_tableros(char tablero[4][4], char tablero_mostrar[4][4]) {
     }
 }
 
-void actualizar_y_enviar_tablero(std::vector<Jugador>& jugadores, char tablero[4][4], const std::string& mensaje_turno) {
+int actualizar_y_enviar_tablero(std::vector<Jugador>& jugadores, char tablero[4][4], const std::string& mensaje_turno) {
+    int mueren = 0;
     for (auto& jugador : jugadores) {
         if(jugador.vivo == false) continue;
         char msg[17];
@@ -249,19 +281,23 @@ void actualizar_y_enviar_tablero(std::vector<Jugador>& jugadores, char tablero[4
         int datosEnviados=send(jugador.socket, msg, sizeof(msg), 0);
         if(datosEnviados==-1){
             std::cout << "\033[1;31mError al enviar el tablero al jugador: " << jugador.nombre << "\033[0m" << std::endl;
-            exit(1);
+            jugador.vivo = false;
+            mueren++;
+        //    exit(1);
         }
-        if(strlen(mensaje_turno.c_str()))
+        else if(strlen(mensaje_turno.c_str()))
         {
             datosEnviados=send(jugador.socket, mensaje_turno.c_str(), strlen(mensaje_turno.c_str())+1, 0);
 
             if(datosEnviados==-1){
                 std::cout << "\033[1;31mError al enviar el tablero al jugador: " << jugador.nombre << "\033[0m" << std::endl;
+                mueren++;
                 jugador.vivo = false;
             //    exit(1);
             }
         }
     }
+    return mueren;
 }
 
 void parse_arguments(int argc, char* argv[], int* puerto, int* max_jugadores) {
