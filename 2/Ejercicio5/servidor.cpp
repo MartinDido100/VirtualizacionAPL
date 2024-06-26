@@ -63,7 +63,6 @@ int main(int argc, char *argv[]) {
 
     while (partida_activa) {
         std::string mensaje_turno = "Servidor: \nTurno del jugador: " + jugadores[turno].nombre + " con puntaje: " + std::to_string(jugadores[turno].puntaje) + "\n\0";
-        //std::cout<<turno<<" => "<<jugadores[turno].nombre<<" esta "<<jugadores[turno].vivo<<std::endl;
         if(jugadores[turno].vivo) for (int jugadas = 0; jugadas < 2; ++jugadas) {
             
             // Verificar si la conexión con el jugador actual está activa
@@ -190,7 +189,6 @@ int main(int argc, char *argv[]) {
         }
         msg += '\0';
         send(jugador.socket, msg.c_str(), msg.size(), 0);
-
     }
     // Cerrar los sockets
     for (const auto& jugador : jugadores) {

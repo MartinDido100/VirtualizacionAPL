@@ -8,7 +8,6 @@
 #include "config.hpp"
 using namespace std;
 
-
 void help();
 void inicializar(char * memoria);
 void inicializar_compartido(datos_compartidos * memoria);
