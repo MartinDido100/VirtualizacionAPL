@@ -9,6 +9,7 @@
 #include <netinet/tcp.h>
 #include <semaphore.h>
 #include <fcntl.h>
+#include <signal.h>
 
 struct Jugador {
     int socket;
@@ -21,7 +22,7 @@ struct Jugador {
 void inicializar_tableros(char tablero[4][4], char tablero_mostrar[4][4]);
 
 //Envía el tablero que se muestra y status a los jugadores
-void actualizar_y_enviar_tablero(std::vector<Jugador>& jugadores, char tablero[4][4], const std::string& mensaje_turno);
+int actualizar_y_enviar_tablero(std::vector<Jugador>& jugadores, char tablero[4][4], const std::string& mensaje_turno);
 
 void parse_arguments(int argc, char* argv[], int* puerto, int* max_jugadores);
 
@@ -30,6 +31,12 @@ void crear_conexion(int* servidor_socket, int max_jugadores, int puerto);
 std::vector<Jugador> iniciar_conexion_clientes(int max_jugadores, int servidor_socket);
 
 void mostrar_ayuda();
+
+std::function<void(int)> _muerte_ordenada;
+
+void muerte_ordenada(int sig){
+    _muerte_ordenada(sig);
+}
 
 int main(int argc, char *argv[]) {
     // const std::string SEMAFORO_CLIENTE = "semaforo_clientes";
@@ -48,6 +55,21 @@ int main(int argc, char *argv[]) {
 
     crear_conexion(&servidor_socket, max_jugadores, puerto);
 
+    _muerte_ordenada = [&](int sig){
+        std::cout << "Signal "<<sig<<std::endl;
+        std::cout << "Servidor: Cerrando el servidor..." << std::endl;
+        close(servidor_socket);
+        exit(0);
+    };
+
+    signal(SIGINT, muerte_ordenada);
+    signal(SIGUSR1, muerte_ordenada);
+    signal(SIGTERM, muerte_ordenada);
+    signal(SIGHUP, muerte_ordenada);
+    signal(SIGQUIT, muerte_ordenada);
+    signal(SIGPIPE, SIG_IGN);
+
+
     std::cout << "Esperando a que se conecten todos los jugadores..." << std::endl;
 
     jugadores=iniciar_conexion_clientes(max_jugadores, servidor_socket);
@@ -63,9 +85,12 @@ int main(int argc, char *argv[]) {
 
     while (partida_activa) {
         std::string mensaje_turno = "Servidor: \nTurno del jugador: " + jugadores[turno].nombre + " con puntaje: " + std::to_string(jugadores[turno].puntaje) + "\n\0";
-        //std::cout<<turno<<" => "<<jugadores[turno].nombre<<" esta "<<jugadores[turno].vivo<<std::endl;
         if(jugadores[turno].vivo) for (int jugadas = 0; jugadas < 2; ++jugadas) {
-            
+            std::cout<<std::endl;
+            if(jugadores[turno].vivo == false){
+                tablero_mostrar[fila_anterior][col_anterior] = '-';
+                break;
+            }
             // Verificar si la conexión con el jugador actual está activa
             int error = 0;
             socklen_t len = sizeof(error);
@@ -75,7 +100,7 @@ int main(int argc, char *argv[]) {
                 tablero_mostrar[fila_anterior][col_anterior] = '-';
                 jugadores[turno].vivo = false;
                 vivos--;
-                if(vivos==1){
+                if(vivos<=1){
                     partida_activa = false;
                     for(auto & jugador : jugadores)
                         if(jugador.vivo)
@@ -87,7 +112,21 @@ int main(int argc, char *argv[]) {
             std::cout << "Servidor: Esperando jugadada del jugador: " << jugadores[turno].nombre << "\n" << std::endl;
 
             // Enviar mensaje indicando que es el turno del jugador actual
-            actualizar_y_enviar_tablero(jugadores, tablero_mostrar, mensaje_turno);
+            int mueren = actualizar_y_enviar_tablero(jugadores, tablero_mostrar, mensaje_turno);
+            if(mueren>0){
+                vivos -= mueren;
+                if(vivos<=1){
+                    partida_activa = false;
+                    for(auto & jugador : jugadores)
+                        if(jugador.vivo)
+                            jugador.puntaje += (8 - aciertos);
+                    break;
+                }
+                if(jugadores[turno].vivo == false){
+                    tablero_mostrar[fila_anterior][col_anterior] = '-';
+                    break;
+                }
+            }
             const char* mensaje_tu_turno = "Servidor: Es tu turno";
             // sem_wait(semaforo_buffer_disp);
             send(jugadores[turno].socket, mensaje_tu_turno, strlen(mensaje_tu_turno)+1, 0);
@@ -97,9 +136,10 @@ int main(int argc, char *argv[]) {
             if (bytes_received <= 0) {
                 std::cout << "Servidor: Jugador desconectado: " << jugadores[turno].nombre << std::endl;
                 tablero_mostrar[fila_anterior][col_anterior] = '-';
-                jugadores[turno].vivo = false;
+                jugadores[turno].vivo = false;                
                 vivos--;
-                if(vivos==1){
+                std::cout<<"Quedan "<<vivos<<" jugadores"<<std::endl;
+                if(vivos<=1){
                     partida_activa = false;
                     for(auto & jugador : jugadores)
                         if(jugador.vivo)
@@ -107,7 +147,7 @@ int main(int argc, char *argv[]) {
                 }
                 break;
             }
-
+            
             int fila = jugada[0];
             int col = jugada[1];
 
@@ -136,7 +176,19 @@ int main(int argc, char *argv[]) {
                 }
 
                 if (jugadas == 1) {
-                    actualizar_y_enviar_tablero(jugadores, tablero_mostrar, "");
+                    mueren = actualizar_y_enviar_tablero(jugadores, tablero_mostrar, "");
+                    
+                    if(mueren>0){
+                        vivos -= mueren;
+                        if(vivos<=1){
+                            partida_activa = false;
+                            for(auto & jugador : jugadores)
+                                if(jugador.vivo)
+                                    jugador.puntaje += (8 - aciertos);
+                            break;
+                        }
+                    }
+                    
                     if (tablero[fila][col] == tablero[fila_anterior][col_anterior]) {
                         tablero_mostrar[fila][col] = tablero[fila][col];
                         tablero_mostrar[fila_anterior][col_anterior] = tablero[fila_anterior][col_anterior];
@@ -190,15 +242,15 @@ int main(int argc, char *argv[]) {
         }
         msg += '\0';
         send(jugador.socket, msg.c_str(), msg.size(), 0);
-
     }
     // Cerrar los sockets
     for (const auto& jugador : jugadores) {
         close(jugador.socket);
     }
+
     // sem_unlink(SEMAFORO_CLIENTE.c_str());
     close(servidor_socket);
-
+    std::cerr<<" socket liberado "<<std::endl;
     return 0;
 }
 
@@ -217,7 +269,8 @@ void inicializar_tableros(char tablero[4][4], char tablero_mostrar[4][4]) {
     }
 }
 
-void actualizar_y_enviar_tablero(std::vector<Jugador>& jugadores, char tablero[4][4], const std::string& mensaje_turno) {
+int actualizar_y_enviar_tablero(std::vector<Jugador>& jugadores, char tablero[4][4], const std::string& mensaje_turno) {
+    int mueren = 0;
     for (auto& jugador : jugadores) {
         if(jugador.vivo == false) continue;
         char msg[17];
@@ -228,19 +281,23 @@ void actualizar_y_enviar_tablero(std::vector<Jugador>& jugadores, char tablero[4
         int datosEnviados=send(jugador.socket, msg, sizeof(msg), 0);
         if(datosEnviados==-1){
             std::cout << "\033[1;31mError al enviar el tablero al jugador: " << jugador.nombre << "\033[0m" << std::endl;
-            exit(1);
+            jugador.vivo = false;
+            mueren++;
+        //    exit(1);
         }
-        if(strlen(mensaje_turno.c_str()))
+        else if(strlen(mensaje_turno.c_str()))
         {
             datosEnviados=send(jugador.socket, mensaje_turno.c_str(), strlen(mensaje_turno.c_str())+1, 0);
 
             if(datosEnviados==-1){
                 std::cout << "\033[1;31mError al enviar el tablero al jugador: " << jugador.nombre << "\033[0m" << std::endl;
+                mueren++;
                 jugador.vivo = false;
             //    exit(1);
             }
         }
     }
+    return mueren;
 }
 
 void parse_arguments(int argc, char* argv[], int* puerto, int* max_jugadores) {
@@ -285,7 +342,7 @@ void crear_conexion(int* servidor_socket, int max_jugadores, int puerto) {
 
     // Configurar TCP_NODELAY
     int flag = 1;
-    if (setsockopt(*servidor_socket, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(int)) < 0) {
+    if (setsockopt(*servidor_socket, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(int)) < 0) {
         perror("setsockopt");
         exit(1);
     }
@@ -343,7 +400,9 @@ void mostrar_ayuda(){
     printf("\n\t$sudo apt install build-essential\n");
     printf("\nPara compilar los makefile ejecutar el siguiente comando:\n");
     printf("\n\t$make all\n");
-
+    printf("\nPara borrar los makefile ejecutar el siguiente comando:\n");
+    printf("\n\t$make clean\n");
+    
     printf("\nDescripcion:");
     printf("\n\tEl siguiente programa ejecuta el juego de la memoria Memotest, pero alfabetico \n\n");
     printf("\nEl programa se implementa a travez de de conexiones de red, pudiendo admitir más de un cliente por servidor.");
@@ -353,6 +412,17 @@ void mostrar_ayuda(){
     printf("\n-p/--puerto: Numero del puerto. (Requerido)\n");
     printf("\n-j/--jugadores:Cantidad de jugadores a esperar para iniciar la sala. (Requerido)\n");
 
+    printf("\nInterfaz:");
+    printf("\n  0 1 2 3 \n");
+    printf("\n0 - - - -\n");
+    printf("\n1 - - - -\n");
+    printf("\n2 - - - -\n");
+    printf("\n3 - - - -\n");
+    printf("\nIngrese las coordenadas de fila y columna (0-3) de la celda que desea seleccionar");
+    printf("\n(Cualquier caracter que ingrese que no sea un número entre 0 y 3 será ignorado)");
+    printf("\nSe puede ingresar cualquier cosa que se leeran los primeros numeros entre 0 y 3");
+    printf("\nPor ejemplo si se ingresa: aaa 0odgsaod92 se leeran las coordenadas 0 2");
+
     printf("\nEjemplos de llamadas:\n");
     printf("\n\t$./servidor -p 8080 -j 2\n");
     printf("\n\t$./servidor --puerto 8080 --jugadores 2\n");
@@ -360,6 +430,8 @@ void mostrar_ayuda(){
     printf("\n---------------------------------------------------------------------------------------------------------\n");
 
     printf("\nAclaraciones\n");
+    printf("\nAl cerrar la consola no se detendra ninguno de los procesos en ejecucion sea servidor o cliente, la forma de desconectar\n");
+    printf("\nal cliente o servidor es con CTRL+C o enviando una señal SIGUSR1 al proceso\n");
     printf("\n\tEl juego de la memoria Memotest consiste en encontrar las parejas de letras en el menor tiempo posible.");
     printf("\n\tEl juego finaliza cuando se encuentran todas las parejas.");
     printf("\n1. Si el servidor se cae (deja de funcionar) o es detenido, los clientes deben seran notificados y se cerrara de forma controlada.\n");

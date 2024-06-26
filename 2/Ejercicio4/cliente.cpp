@@ -11,6 +11,7 @@ using namespace std;
 void help();
 void mostrar(char memoria[4][4]);
 void muerte_ordenada(int sig);
+int getNextInt();
 
 datos_compartidos * memoria;
 
@@ -94,8 +95,11 @@ int main( int argc, char *argv[]){
         mostrar(memoria->mostrar);
         int i,j;
         cout<<"Ingrese las coordenadas de fila y columna (0 - 3) de la celda que desea seleccionar "<<endl;
-        cin>>i>>j;
+        //cin>>i>>j;
         
+        i = getNextInt();
+        j = getNextInt();
+
         memoria->jugada[0] = char(i);
         memoria->jugada[1] = char(j);
 
@@ -148,7 +152,10 @@ void help(){
     printf("\n2 - - - -\n");
     printf("\n3 - - - -\n");
     printf("\nIngrese las coordenadas de fila y columna (0-3) de la celda que desea seleccionar");
-
+    printf("\n(Cualquier caracter que ingrese que no sea un número entre 0 y 3 será ignorado)");
+    printf("\nSe puede ingresar cualquier cosa que se leeran los primeros numeros entre 0 y 3");
+    printf("\nPor ejemplo si se ingresa: aaa 0odgsaod92 se leeran las coordenadas 0 2");
+    
     printf("\nEjemplos de llamadas:\n");
     printf("\nInicio Cliente:");
     printf("\n\t$ ./cliente\n");
@@ -209,4 +216,14 @@ void muerte_ordenada(int sig){
 
     sem_post(semaforo_no_cliente);
     exit(0);
+}
+
+int getNextInt(){
+    char c;
+    while(true){
+        c = getchar();
+        if(c >= '0' and c <= '3'){
+            return c - '0';
+        }
+    }
 }

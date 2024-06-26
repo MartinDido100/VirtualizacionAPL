@@ -3,18 +3,29 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <cstring>
+#include <signal.h>
 
 using namespace std;
 
 void mostrar(char memoria[4][4]);
 void mostrar_ayuda();
-void check_connection(int sock);
+int get_next_int();
+bool is_socket_open(int socket_fd);
+int sock;
+
+void muerte_ordenada(int sig){
+    cout<<"Cerrando con signal "<<sig<<endl;
+    close(sock);
+    exit(sig);
+}
 
 int main(int argc, char *argv[]) {
     string nickname;
     string server_ip;
     int server_port = -1;
     
+    signal(SIGINT, SIG_IGN);
+
     for (int i = 1; i < argc; i += 2) {
         string arg = argv[i];
         if (arg == "-n" || arg == "--nickname") {
@@ -45,11 +56,19 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    int sock = socket(AF_INET, SOCK_STREAM, 0);
+
+
+    sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock < 0) {
         perror("socket");
         return 1;
     }
+    
+    signal(SIGINT, muerte_ordenada);
+    signal(SIGTERM, muerte_ordenada);
+    signal(SIGHUP, muerte_ordenada);
+    signal(SIGQUIT, muerte_ordenada);
+
 
     sockaddr_in server_addr;
     memset(&server_addr, 0, sizeof(server_addr));
@@ -102,11 +121,12 @@ int main(int argc, char *argv[]) {
         }
 
         if(bytes_received == 0){
-            continue;
+            if(is_socket_open(sock))
+                continue;
         }
 
         // std::cout << "Se recibieron en total: " << bytes_received << std::endl;
-        if (bytes_received < 0) {
+        if (bytes_received <= 0) {
             cerr << "\033[1;31mSe perdió conexión con el servidor\033[0m" << endl;
             break;
         }
@@ -136,7 +156,8 @@ int main(int argc, char *argv[]) {
 
                 int i, j;
                 cout << "Ingrese las coordenadas de fila y columna (0 - 3) de la celda que desea seleccionar: ";
-                cin >> i >> j;
+                i = get_next_int();
+                j = get_next_int();
 
                 jugada[0] = char(i);
                 jugada[1] = char(j);
@@ -203,7 +224,20 @@ void mostrar_ayuda(){
     printf("\n\tRecordar que puede utilizar la ip 127.0.0.1 para acceder a un servidor local\n");
     printf("\n---------------------------------------------------------------------------------------------------------\n");
 
+    printf("\nInterfaz:");
+    printf("\n  0 1 2 3 \n");
+    printf("\n0 - - - -\n");
+    printf("\n1 - - - -\n");
+    printf("\n2 - - - -\n");
+    printf("\n3 - - - -\n");
+    printf("\nIngrese las coordenadas de fila y columna (0-3) de la celda que desea seleccionar");
+    printf("\n(Cualquier caracter que ingrese que no sea un número entre 0 y 3 será ignorado)");
+    printf("\nSe puede ingresar cualquier cosa que se leeran los primeros numeros entre 0 y 3");
+    printf("\nPor ejemplo si se ingresa: aaa 0odgsaod92 se leeran las coordenadas 0 2");
+
     printf("\nAclaraciones\n");
+    printf("\nAl cerrar la consola no se detendra ninguno de los procesos en ejecucion sea servidor o cliente, la forma de desconectar\n");
+    printf("\nal cliente o servidor es con CTRL+C o enviando una señal SIGUSR1 al proceso\n");
     printf("\n\tEl juego de la memoria Memotest consiste en encontrar las parejas de letras en el menor tiempo posible.");
     printf("\n\tEl juego finaliza cuando se encuentran todas las parejas.");
     printf("\n1. Si el servidor se cae (deja de funcionar) o es detenido, los clientes deben seran notificados y se cerrara de forma controlada.\n");
@@ -213,3 +247,47 @@ void mostrar_ayuda(){
 
 }
 
+int get_next_int(){
+    char c;
+    while(true){
+        c = getchar();
+        if(c >= '0' && c <= '3'){
+            return c - '0';
+        }
+    }
+}
+
+bool is_socket_open(int socket_fd) {
+    fd_set readfds;
+    struct timeval timeout;
+
+    FD_ZERO(&readfds);
+    FD_SET(socket_fd, &readfds);
+
+    timeout.tv_sec = 1;
+    timeout.tv_usec = 0;
+
+    int result = select(socket_fd + 1, &readfds, NULL, NULL, &timeout);
+   // std::cerr << "result " << result << std::endl;
+
+    if (result == -1) {
+   //     std::cerr << "Error en select(): " << strerror(errno) << std::endl;
+        return false;  // Error
+    } else if (result == 0) {
+        // Timeout, no hay datos disponibles
+        return true;  // La conexión sigue viva, pero no hay datos disponibles
+    } else {
+        if (FD_ISSET(socket_fd, &readfds)) {
+            char buffer;
+            ssize_t recv_result = recv(socket_fd, &buffer, sizeof(buffer), MSG_PEEK);
+            if (recv_result == 0) {
+                return false;  // La conexión está cerrada
+            } else if (recv_result < 0) {
+   //             std::cerr << "Error en recv(): " << strerror(errno) << std::endl;
+                return false;  // Error y la conexión probablemente esté cerrada
+            }
+        }
+    }
+
+    return true;  // La conexión sigue abierta
+}
