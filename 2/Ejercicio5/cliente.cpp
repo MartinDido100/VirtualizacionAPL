@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <cstring>
+#include <signal.h>
 
 using namespace std;
 
@@ -15,6 +16,8 @@ int main(int argc, char *argv[]) {
     string server_ip;
     int server_port = -1;
     
+    signal(SIGINT, SIG_IGN);
+
     for (int i = 1; i < argc; i += 2) {
         string arg = argv[i];
         if (arg == "-n" || arg == "--nickname") {
@@ -204,6 +207,17 @@ void mostrar_ayuda(){
     printf("\n\t$./cliente --nickname Pepe --puerto 8080 --servidor <IP>\n");
     printf("\n\tRecordar que puede utilizar la ip 127.0.0.1 para acceder a un servidor local\n");
     printf("\n---------------------------------------------------------------------------------------------------------\n");
+
+    printf("\nInterfaz:");
+    printf("\n  0 1 2 3 \n");
+    printf("\n0 - - - -\n");
+    printf("\n1 - - - -\n");
+    printf("\n2 - - - -\n");
+    printf("\n3 - - - -\n");
+    printf("\nIngrese las coordenadas de fila y columna (0-3) de la celda que desea seleccionar");
+    printf("\n(Cualquier caracter que ingrese que no sea un número entre 0 y 3 será ignorado)");
+    printf("\nSe puede ingresar cualquier cosa que se leeran los primeros numeros entre 0 y 3");
+    printf("\nPor ejemplo si se ingresa: aaa 0odgsaod92 se leeran las coordenadas 0 2");
 
     printf("\nAclaraciones\n");
     printf("\n\tEl juego de la memoria Memotest consiste en encontrar las parejas de letras en el menor tiempo posible.");

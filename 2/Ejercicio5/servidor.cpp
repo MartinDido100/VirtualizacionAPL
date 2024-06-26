@@ -376,6 +376,17 @@ void mostrar_ayuda(){
     printf("\n-p/--puerto: Numero del puerto. (Requerido)\n");
     printf("\n-j/--jugadores:Cantidad de jugadores a esperar para iniciar la sala. (Requerido)\n");
 
+    printf("\nInterfaz:");
+    printf("\n  0 1 2 3 \n");
+    printf("\n0 - - - -\n");
+    printf("\n1 - - - -\n");
+    printf("\n2 - - - -\n");
+    printf("\n3 - - - -\n");
+    printf("\nIngrese las coordenadas de fila y columna (0-3) de la celda que desea seleccionar");
+    printf("\n(Cualquier caracter que ingrese que no sea un número entre 0 y 3 será ignorado)");
+    printf("\nSe puede ingresar cualquier cosa que se leeran los primeros numeros entre 0 y 3");
+    printf("\nPor ejemplo si se ingresa: aaa 0odgsaod92 se leeran las coordenadas 0 2");
+
     printf("\nEjemplos de llamadas:\n");
     printf("\n\t$./servidor -p 8080 -j 2\n");
     printf("\n\t$./servidor --puerto 8080 --jugadores 2\n");

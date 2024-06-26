@@ -153,6 +153,8 @@ void help(){
     printf("\n3 - - - -\n");
     printf("\nIngrese las coordenadas de fila y columna (0-3) de la celda que desea seleccionar");
     printf("\n(Cualquier caracter que ingrese que no sea un número entre 0 y 3 será ignorado)");
+    printf("\nSe puede ingresar cualquier cosa que se leeran los primeros numeros entre 0 y 3");
+    printf("\nPor ejemplo si se ingresa: aaa 0odgsaod92 se leeran las coordenadas 0 2");
     
     printf("\nEjemplos de llamadas:\n");
     printf("\nInicio Cliente:");

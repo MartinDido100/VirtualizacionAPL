@@ -152,7 +152,7 @@ void help(){
     printf("\n\tExistira un proceso “Cliente”, cuya tarea será mostrar por pantalla el estado actual del tablero y leer \n");
     printf("\t\tdesde teclado el par de casillas que el usuario quiere destapar\n\n");
     printf("\n\tExistira un proceso “Servidor”, que será el encargado de actualizar el estado del tablero en base al  \n");
-    printf("\t\tpar de casillas ingresado, así como controlar la finalización partida. \n\n");		
+    printf("\t\tpar de casillas ingresado, así como controlar la finalización partida. \n\n");
 
     printf("\t\tEl tablero tendrá 16 casillas (4 filas x 4 columnas). \n\n");		
     printf("\t\tSe debe garantizar que no se pueda ejecutar más de un cliente a la vez conectado al mismo servidor. \n\n");
@@ -171,6 +171,8 @@ void help(){
     printf("\n3 - - - -\n");
     printf("\nIngrese las coordenadas de fila y columna (0-3) de la celda que desea seleccionar");
     printf("\n(Cualquier caracter que ingrese que no sea un número entre 0 y 3 será ignorado)");
+    printf("\nSe puede ingresar cualquier cosa que se leeran los primeros numeros entre 0 y 3");
+    printf("\nPor ejemplo si se ingresa: aaa 0odgsaod92 se leeran las coordenadas 0 2");
 
     printf("\nEjemplos de llamadas:\n");
     printf("\nInicio Servidor:");
