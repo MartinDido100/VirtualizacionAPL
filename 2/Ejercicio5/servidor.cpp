@@ -9,6 +9,7 @@
 #include <netinet/tcp.h>
 #include <semaphore.h>
 #include <fcntl.h>
+#include <signal.h>
 
 struct Jugador {
     int socket;
@@ -31,6 +32,12 @@ std::vector<Jugador> iniciar_conexion_clientes(int max_jugadores, int servidor_s
 
 void mostrar_ayuda();
 
+std::function<void(int)> _muerte_ordenada;
+
+void muerte_ordenada(int sig){
+    _muerte_ordenada(sig);
+}
+
 int main(int argc, char *argv[]) {
     // const std::string SEMAFORO_CLIENTE = "semaforo_clientes";
     int puerto = 27018;
@@ -47,6 +54,21 @@ int main(int argc, char *argv[]) {
     parse_arguments(argc, argv, &puerto, &max_jugadores);
 
     crear_conexion(&servidor_socket, max_jugadores, puerto);
+
+    _muerte_ordenada = [&](int sig){
+        std::cout << "Signal "<<sig<<std::endl;
+        std::cout << "Servidor: Cerrando el servidor..." << std::endl;
+        close(servidor_socket);
+        exit(0);
+    };
+
+    signal(SIGINT, SIG_IGN);
+    signal(SIGUSR1, muerte_ordenada);
+    signal(SIGTERM, muerte_ordenada);
+    signal(SIGHUP, muerte_ordenada);
+    signal(SIGQUIT, muerte_ordenada);
+
+
 
     std::cout << "Esperando a que se conecten todos los jugadores..." << std::endl;
 
@@ -196,9 +218,10 @@ int main(int argc, char *argv[]) {
     for (const auto& jugador : jugadores) {
         close(jugador.socket);
     }
+
     // sem_unlink(SEMAFORO_CLIENTE.c_str());
     close(servidor_socket);
-
+    std::cerr<<" socket liberado "<<std::endl;
     return 0;
 }
 
@@ -285,7 +308,7 @@ void crear_conexion(int* servidor_socket, int max_jugadores, int puerto) {
 
     // Configurar TCP_NODELAY
     int flag = 1;
-    if (setsockopt(*servidor_socket, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(int)) < 0) {
+    if (setsockopt(*servidor_socket, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(int)) < 0) {
         perror("setsockopt");
         exit(1);
     }
