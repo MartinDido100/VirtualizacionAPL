@@ -267,4 +267,4 @@ void procesarDirectorio(DIR* dir,char* input,int cantHilos,FILE* outFile){
         pthread_join(hilos[j],NULL);
     }
 
-}
+} 

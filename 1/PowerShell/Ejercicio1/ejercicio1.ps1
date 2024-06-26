@@ -220,7 +220,7 @@ function Get-manejarArchivos() {
             }
         }
         #
-        $json = $jsonObj | ConvertTo-Json -Depth 3
+        $json = $  | ConvertTo-Json -Depth 3
         Write-Output $json
     }
 }
