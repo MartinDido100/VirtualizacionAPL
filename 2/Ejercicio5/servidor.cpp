@@ -97,7 +97,7 @@ int main(int argc, char *argv[]) {
                 tablero_mostrar[fila_anterior][col_anterior] = '-';
                 jugadores[turno].vivo = false;
                 vivos--;
-                if(vivos==1){
+                if(vivos<=1){
                     partida_activa = false;
                     for(auto & jugador : jugadores)
                         if(jugador.vivo)
@@ -121,7 +121,7 @@ int main(int argc, char *argv[]) {
                 tablero_mostrar[fila_anterior][col_anterior] = '-';
                 jugadores[turno].vivo = false;
                 vivos--;
-                if(vivos==1){
+                if(vivos<=1){
                     partida_activa = false;
                     for(auto & jugador : jugadores)
                         if(jugador.vivo)
