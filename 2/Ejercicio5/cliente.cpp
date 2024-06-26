@@ -8,8 +8,8 @@ using namespace std;
 
 void mostrar(char memoria[4][4]);
 void mostrar_ayuda();
-void check_connection(int sock);
-
+int get_next_int();
+bool is_socket_open(int socket_fd);
 int main(int argc, char *argv[]) {
     string nickname;
     string server_ip;
@@ -102,11 +102,12 @@ int main(int argc, char *argv[]) {
         }
 
         if(bytes_received == 0){
-            continue;
+            if(is_socket_open(sock))
+                continue;
         }
 
         // std::cout << "Se recibieron en total: " << bytes_received << std::endl;
-        if (bytes_received < 0) {
+        if (bytes_received <= 0) {
             cerr << "\033[1;31mSe perdió conexión con el servidor\033[0m" << endl;
             break;
         }
@@ -136,7 +137,8 @@ int main(int argc, char *argv[]) {
 
                 int i, j;
                 cout << "Ingrese las coordenadas de fila y columna (0 - 3) de la celda que desea seleccionar: ";
-                cin >> i >> j;
+                i = get_next_int();
+                j = get_next_int();
 
                 jugada[0] = char(i);
                 jugada[1] = char(j);
@@ -213,3 +215,47 @@ void mostrar_ayuda(){
 
 }
 
+int get_next_int(){
+    char c;
+    while(true){
+        c = getchar();
+        if(c >= '0' && c <= '3'){
+            return c - '0';
+        }
+    }
+}
+
+bool is_socket_open(int socket_fd) {
+    fd_set readfds;
+    struct timeval timeout;
+
+    FD_ZERO(&readfds);
+    FD_SET(socket_fd, &readfds);
+
+    timeout.tv_sec = 1;
+    timeout.tv_usec = 0;
+
+    int result = select(socket_fd + 1, &readfds, NULL, NULL, &timeout);
+   // std::cerr << "result " << result << std::endl;
+
+    if (result == -1) {
+   //     std::cerr << "Error en select(): " << strerror(errno) << std::endl;
+        return false;  // Error
+    } else if (result == 0) {
+        // Timeout, no hay datos disponibles
+        return true;  // La conexión sigue viva, pero no hay datos disponibles
+    } else {
+        if (FD_ISSET(socket_fd, &readfds)) {
+            char buffer;
+            ssize_t recv_result = recv(socket_fd, &buffer, sizeof(buffer), MSG_PEEK);
+            if (recv_result == 0) {
+                return false;  // La conexión está cerrada
+            } else if (recv_result < 0) {
+   //             std::cerr << "Error en recv(): " << strerror(errno) << std::endl;
+                return false;  // Error y la conexión probablemente esté cerrada
+            }
+        }
+    }
+
+    return true;  // La conexión sigue abierta
+}

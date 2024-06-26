@@ -35,7 +35,6 @@ int main( int argc, char *argv[]){
 
     int value = 0;
     sem_getvalue(semaforo_servidor, &value);
-    
     if(value==0){
         cerr << "\033[1;31mERROR : YA EXISTE UN SERVIDOR EN EJECUCION\033[0m" << endl;
         // cerr << " ERROR : YA EXISTE UN SERVIDOR EN EJECUCION" << endl;
@@ -171,6 +170,7 @@ void help(){
     printf("\n2 - - - -\n");
     printf("\n3 - - - -\n");
     printf("\nIngrese las coordenadas de fila y columna (0-3) de la celda que desea seleccionar");
+    printf("\n(Cualquier caracter que ingrese que no sea un número entre 0 y 3 será ignorado)");
 
     printf("\nEjemplos de llamadas:\n");
     printf("\nInicio Servidor:");
@@ -232,6 +232,8 @@ void muerte_ordenada(int sig){
     
     
     // sem_wait(semaforo_cliente);
+    sem_unlink(SEMAFORO_NO_CLIENTE.c_str());
+    sem_unlink(SEMAFORO_SERVIDOR.c_str());
     sem_unlink(SEMAFORO_CLIENTE.c_str());
     sem_unlink(SEMAFORO_SERVIDOR.c_str());
     sem_unlink(SEMAFORO_JUGADA_A.c_str());
